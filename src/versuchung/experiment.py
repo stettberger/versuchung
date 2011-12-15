@@ -4,15 +4,15 @@ from optparse import OptionParser
 import datetime
 import logging
 import pprint
-from versuchung.types import InputParameter, OutputParameter
+from versuchung.types import InputParameter, OutputParameter, Type
 import sys, os
 import hashlib
 import shutil
 
-class Experiment(InputParameter):
+class Experiment(Type, InputParameter):
     def __init__(self, default_experiment_instance = None):
         self.title = self.__class__.__name__
-        self.__experiment_instance =  default_experiment_instance
+        self.__experiment_instance = default_experiment_instance
 
     def __setup_parser(self):
         self.__parser = OptionParser("%prog <options>")
@@ -31,12 +31,14 @@ class Experiment(InputParameter):
     def __call__(self, args):
         self.__setup_parser()
         (opts, args) = self.__parser.parse_args(args)
+        self.pwd = os.path.abspath(os.curdir)
 
         if opts.do_list:
-            self.do_list()
+            for experiment in os.listdir(self.pwd):
+                if experiment.startswith(self.title):
+                    self.__do_list(self.__class__(experiment))
             return
 
-        self.pwd = os.path.abspath(os.curdir)
 
         for (name, inp) in self.inputs.items():
             inp.base_directory = self.pwd
@@ -60,9 +62,18 @@ class Experiment(InputParameter):
         for (name, outp) in self.outputs.items():
             outp.outp_tear_down_output()
 
+        return self.__experiment_instance
 
-    def __do_list(self):
-        exit(0)
+
+    def __do_list(self, experiment, indent = 0):
+        with open(os.path.join(experiment.__experiment_instance, "metadata")) as fd:
+            content = fd.read()
+        d = eval(content)
+        print "+%s%s" % (" " * indent,
+                        content.strip().replace("\n", "\n|" + (" " * indent)))
+        for dirname in os.listdir("."):
+            if dirname in d.values():
+                self.__do_list(Experiment(dirname), indent + 3)
 
     def __setup_output_directory(self):
         metadata = {}
@@ -73,7 +84,8 @@ class Experiment(InputParameter):
         for key in sorted(metadata.keys()):
             m.update(key + " " + metadata[key])
 
-        output_path = os.path.join(self.pwd, "%s-%s" %(self.title, m.hexdigest()))
+        self.__experiment_instance = "%s-%s" %(self.title, m.hexdigest())
+        output_path = os.path.join(self.pwd, self.__experiment_instance)
         if os.path.exists(output_path):
             logging.info("Output directory existed already, purging it")
             shutil.rmtree(output_path)
@@ -90,8 +102,7 @@ class Experiment(InputParameter):
         fd.write(pprint.pformat(metadata) + "\n")
         fd.close()
 
-        return output_path
-
+        return self.__experiment_instance
 
     ### Input Type
     def inp_setup_cmdline_parser(self, parser):
