@@ -5,14 +5,23 @@ import datetime
 import logging
 import pprint
 from versuchung.types import InputParameter, OutputParameter, Type
+from versuchung.tools import JavascriptStyleDictAccess
 import sys, os
 import hashlib
 import shutil
+import copy
 
 class Experiment(Type, InputParameter):
+    inputs = {}
+    outputs = {}
+    
     def __init__(self, default_experiment_instance = None):
         self.title = self.__class__.__name__
         self.__experiment_instance = default_experiment_instance
+        # Copy input and output objects
+        self.inputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.inputs))
+        self.outputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.outputs))
+
 
     def __setup_parser(self):
         self.__parser = OptionParser("%prog <options>")

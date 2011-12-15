@@ -70,27 +70,32 @@ class String(InputParameter):
     def value(self):
         return self.__value
 
-class File(InputParameter, OutputParameter):
-    def __init__(self, default_filename=""):
-        self.__filename = default_filename
-        self.__value = ""
-
-    @property
-    def filename(self):
-        return os.path.join(self.base_directory, self.__filename)
+class FilesystemObject(InputParameter, OutputParameter):
+    def __init__(self, default_name=""):
+        self.__object_name = default_name
 
     def inp_setup_cmdline_parser(self, parser):
-        self.inp_parser_add(parser, None, self.__filename)
+        self.inp_parser_add(parser, None, self.__object_name)
 
     def inp_extract_cmdline_parser(self, opts, args):
-        self.__filename = self.inp_parser_extract(opts, None)
+        self.__object_name = self.inp_parser_extract(opts, None)
 
     def inp_metadata(self):
-        return {self.name: self.__filename}
+        return {self.name: self.__object_name}
+
+    @property
+    def path(self):
+        return os.path.join(self.base_directory, self.__object_name)
+
+
+class File(FilesystemObject):
+    def __init__(self, default_filename=""):
+        FilesystemObject.__init__(self, default_filename)
+        self.__value = ""
 
     def value(self):
         if not self.__value:
-            with open(self.filename) as fd:
+            with open(self.path) as fd:
                 self.__value = fd.read()
         return self.__value
 
@@ -104,8 +109,34 @@ class File(InputParameter, OutputParameter):
         pass
 
     def outp_tear_down_output(self):
-        with open(os.path.join(self.base_directory, self.filename), "w+") as fd:
+        with open(os.path.join(self.base_directory, self.path), "w+") as fd:
             if self.__value is None:
                 self.__value = ""
             fd.write(self.__value)
 
+
+class Directory(FilesystemObject):
+    def __init__(self, default_filename=""):
+        FilesystemObject.__init__(self, default_filename)
+        self.__value = None
+        self.__new_files = []
+
+    def value(self):
+        """Return of directories and files in given directory"""
+        if not self.__value:
+            self.__value = os.listdir(self.path)
+        return self.__value
+
+    def outp_setup_output(self):
+        os.mkdir(self.path)
+
+    def outp_tear_down_output(self):
+        for f in self.__new_files:
+            f.outp_tear_down_output()
+
+    def new_file(self, name):
+        """Generate a new File (versuchung.types.File) in directory."""
+        f = File(name)
+        f.base_directory = self.path
+        self.__new_files.append(f)
+        return f
