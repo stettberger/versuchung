@@ -89,6 +89,8 @@ class FilesystemObject(InputParameter, OutputParameter, Type):
 
     @property
     def path(self):
+        if not hasattr(self, "base_directory"):
+            return os.path.abspath(self.__object_name)
         return os.path.join(self.base_directory, self.__object_name)
 
 

@@ -5,7 +5,7 @@ import datetime
 import logging
 import pprint
 from versuchung.types import InputParameter, OutputParameter, Type, Directory
-from versuchung.tools import JavascriptStyleDictAccess
+from versuchung.tools import JavascriptStyleDictAccess, setup_logging
 import sys, os
 import hashlib
 import shutil
@@ -16,6 +16,7 @@ class ExperimentError(Exception):
     pass
 
 class Experiment(Type, InputParameter):
+    version = 1
     inputs = {}
     outputs = {}
 
@@ -48,11 +49,29 @@ class Experiment(Type, InputParameter):
             inp.name = name
             inp.inp_setup_cmdline_parser(self.__parser)
 
-    def __call__(self, args = [], **kwargs):
+    def __setup_tmp_directory(self):
+        """Creat temporary directory and assign it to every input and
+        output directories tmp_directory slots"""
+        # Create temp directory
+        self.tmp_directory = Directory(tempfile.mkdtemp())
+        self.tmp_directory.base_directory = self.pwd
+
+        for (name, inp) in self.inputs.items():
+            if hasattr(inp, 'tmp_directory'):
+                inp.tmp_directory = self.tmp_directory
+        for (name, outp) in self.outputs.items():
+            if hasattr(outp, 'tmp_directory'):
+                outp.tmp_directory = self.tmp_directory
+
+
+
+    def execute(self, args = [], **kwargs):
         self.__setup_parser()
         (opts, args) = self.__parser.parse_args(args)
         os.chdir(opts.base_dir)
         self.pwd = os.path.abspath(os.curdir)
+        setup_logging(opts.verbose)
+
 
         if opts.do_list:
             for experiment in os.listdir(self.pwd):
@@ -65,14 +84,11 @@ class Experiment(Type, InputParameter):
                 raise AttributeError("No argument called %s" % key)
             setattr(opts, key, kwargs[key])
 
-        # Create temp directory
-        self.tmp_directory = Directory(tempfile.mkdtemp())
-        self.tmp_directory.base_directory = self.pwd
+        self.__setup_tmp_directory()
+
 
         for (name, inp) in self.inputs.items():
             inp.base_directory = self.pwd
-            if hasattr(inp, 'tmp_directory'):
-                inp.tmp_directory = self.tmp_directory
             ret = inp.inp_extract_cmdline_parser(opts, args)
             if ret:
                 (opts, args) = ret
@@ -97,6 +113,8 @@ class Experiment(Type, InputParameter):
         shutil.rmtree(self.tmp_directory.path)
 
         return self.__experiment_instance
+
+    __call__ = execute
 
 
     def __do_list(self, experiment, indent = 0):
@@ -142,6 +160,7 @@ class Experiment(Type, InputParameter):
     ### Input Type
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, self.__experiment_instance)
+
     def inp_extract_cmdline_parser(self, opts, args):
         self.__experiment_instance = self.inp_parser_extract(opts, None)
         self.name = self.__experiment_instance
