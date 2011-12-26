@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import logging
 
 class JavascriptStyleDictAccess(dict):
     def __init__(self, d):
@@ -8,12 +9,13 @@ class JavascriptStyleDictAccess(dict):
             return dict.__getattribute__(self, name)
         except AttributeError:
             pass
+        if name in self:
+            return self[name]
         name = name.replace("_", "-")
         if name in self:
             return self[name]
         raise AttributeError
 
-import logging
 
 
 def setup_logging(log_level):
