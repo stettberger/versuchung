@@ -16,11 +16,78 @@ class ExperimentError(Exception):
     pass
 
 class Experiment(Type, InputParameter):
+    """Can be used as: **input parameter**"""
+
     version = 1
+    """Version of the experiment, defaults to 1. The version is
+    included in the metadata **and** used for the metadata hash."""
+
+
+    i = None
+    """Shorthand for :attr:`~.inputs`"""
+
     inputs = {}
+    """In the input dictionary all input parameters are defined. They
+    may and will influence the metadata and the metadata hash. Only
+    objects which are marked as **input parameters** may be used
+    here. The key in this ``dict`` is used as :attr:`~.name` attribute
+    and propagated to the parameters. From these input parameters the
+    command line interface is created.
+
+    This ``dict`` can not only be used as a dictionary but also a
+    object with the dot-notation (this behaviour is known and widely
+    used in javascript). And there is i as a shorthand.
+
+    >>> self.inputs["string_parameter"]
+    <versuchung.types.String object at 0xb73fabec>
+    >>> self.inputs.string_parameter
+    <versuchung.types.String object at 0xb73fabec>
+    >>> self.i.string_parameter
+    <versuchung.types.String object at 0xb73fabec>
+    """
+
+    o = None
+    """Shorthand for :attr:`~.outputs`"""
+
     outputs = {}
+    """Similar to the :attr:`~.inputs` attribute, in the output
+    dictionary all experiment results are defined. Only objects that
+    are explicitly marked as **output parameters** can be used
+    here.
+
+    When a experiment is used as an input parameter. The results of
+    the old experiment can be accessed through this attribute. Of
+    course at all points the short hands for inputs and outputs can be
+    used. As well as the javascript style access to dictionary members.
+
+    >>> self.inputs["experiment"].outputs["out_file"]
+    <versuchung.types.File object at 0xb736220c>
+    >>> self.i.experiment.o.out_file
+    <versuchung.types.File object at 0xb736220c>
+    """
+
+    title = None
+    """Title of the experiment, this is normally the classname"""
+
+    name = None
+    """The name of the object. This is in execution mode (Experiment
+    instance is the executed experiment) the result set name
+    (str). When the experiment is used as input parameter it is the
+    key-value in the :attr:`~.inputs` dictionary."""
 
     def __init__(self, default_experiment_instance = None):
+        """The constructor of an experiment just filles in the
+        necessary attributes but has *no* sideeffects on the outside
+        world.
+
+        :param default_experiment_instance: If used as input
+              parameter, this is the default result set used. For
+              example
+              ``"SimpleExperiment-aeb298601cdc582b1b0d8260195f6cfd"``
+        :type default_experiment_instance: str.
+
+        """
+
         self.title = self.__class__.__name__
         self.name  = default_experiment_instance
 
@@ -30,6 +97,20 @@ class Experiment(Type, InputParameter):
         self.i = self.inputs
         self.outputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.outputs))
         self.o = self.outputs
+
+        for (name, inp) in self.inputs.items():
+            if not isinstance(inp, InputParameter):
+                print "%s cannot be used as an input parameter" % name
+                sys.exit(-1)
+            inp.name = name
+
+        for (name, outp) in self.outputs.items():
+            if not isinstance(outp, OutputParameter):
+                print "%s cannot be used as an output parameter" % name
+                sys.exit(-1)
+            outp.name = name
+
+
 
 
     def __setup_parser(self):
@@ -43,10 +124,6 @@ class Experiment(Type, InputParameter):
                                  help="increase verbosity (specify multiple times for more)")
 
         for (name, inp) in self.inputs.items():
-            if not isinstance(inp, InputParameter):
-                print "%s cannot be used as an input parameter" % name
-                sys.exit(-1)
-            inp.name = name
             inp.inp_setup_cmdline_parser(self.__parser)
 
     def __setup_tmp_directory(self):
@@ -63,9 +140,27 @@ class Experiment(Type, InputParameter):
             if hasattr(outp, 'tmp_directory'):
                 outp.tmp_directory = self.tmp_directory
 
-
-
     def execute(self, args = [], **kwargs):
+        """Calling this method will be executed.
+
+        :param args: The command line arguments, normally ``sys.argv``
+        :type args: list.
+
+        :kwargs: The keyword arguments can be used to overwrite the
+          default values of the experiment, without assembling a command
+          line.
+
+        The normal mode of operation is to give ``sys.argv`` as
+        argument:
+
+        >>> experiment.execute(sys.argv)
+
+        But with keyword arguments the following two expression result
+        in the same result set:
+
+        >>> experiment.execute(["--input_parameter", "foo"])
+        >>> experiment.execute(input_parameter="foo")
+        """
         self.__setup_parser()
         (opts, args) = self.__parser.parse_args(args)
         os.chdir(opts.base_dir)
@@ -98,10 +193,6 @@ class Experiment(Type, InputParameter):
         self.__output_directory = os.path.join(self.pwd, self.__experiment_instance)
 
         for (name, outp) in self.outputs.items():
-            if not isinstance(outp, OutputParameter):
-                print "%s cannot be used as an output parameter" % name
-                sys.exit(-1)
-            outp.name = name
             outp.base_directory = self.__output_directory
             outp.outp_setup_output()
 
@@ -115,6 +206,9 @@ class Experiment(Type, InputParameter):
         return self.__experiment_instance
 
     __call__ = execute
+    """A experiment can also executed by calling it, :attr:`execute` will be called.
+
+    >>> experiment(sys.argv)"""
 
 
     def __do_list(self, experiment, indent = 0):
@@ -171,3 +265,11 @@ class Experiment(Type, InputParameter):
             outp.base_directory = os.path.join(self.base_directory, self.__experiment_instance)
     def inp_metadata(self):
         return {self.title: self.__experiment_instance}
+
+    def run(self):
+        """This method is the hearth of every experiment and must be
+        implemented by the user. It is called when the experiment is
+        executed. Before all input parameters are parsed, the output
+        directory is set up. Afterwards all temporary data is removed
+        and the output parameters are deinitialized."""
+        raise NotImplemented

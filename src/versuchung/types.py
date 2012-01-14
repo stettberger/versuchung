@@ -66,6 +66,10 @@ class OutputParameter:
 
 
 class String(InputParameter, Type):
+    """Can be used as: **input parameter**
+
+    A String is the most simple input parameter."""
+
     def __init__(self, default_value=""):
         self.__value = default_value
 
@@ -98,18 +102,29 @@ class FilesystemObject(InputParameter, OutputParameter, Type):
 
     @property
     def path(self):
+        """:return: string -- path to the file/directory"""
         if not hasattr(self, "base_directory"):
             return os.path.abspath(self.__object_name)
         return os.path.join(self.base_directory, self.__object_name)
 
 
 class File(FilesystemObject):
+    """Can be used as: **input parameter** and **output parameter**
+
+    The File type represents the content of a single file. Its
+    contents can be read, overwritten and content can be appended. But
+    be aware, that the content is just flushed after the experiment is
+    over. If you want to do this manually use :meth:`flush`.
+    """
+
     def __init__(self, default_filename=""):
         FilesystemObject.__init__(self, default_filename)
         self.__value = None
 
     @property
     def value(self):
+        """This attribute can be read and written and represent the
+        exact content of the specified file"""
         if not self.__value:
             with open(self.path) as fd:
                 self.__value = self.after_read(fd.read())
@@ -119,6 +134,8 @@ class File(FilesystemObject):
         self.__value = value
 
     def write(self, content, append = False):
+        """Similar to :attr:`value`. If append is false :attr:`value`
+        is overwritten, otherwise the content is appendend"""
         if append:
             self.value += content
         else:
@@ -130,6 +147,10 @@ class File(FilesystemObject):
             fd.write("")
 
     def outp_tear_down_output(self):
+        self.flush()
+
+    def flush(self):
+        """Flush the cached content of the file to disk"""
         with open(self.path, "w+") as fd:
             v = self.before_write(self.value)
             if v is None:
@@ -146,6 +167,17 @@ class File(FilesystemObject):
         return value
 
 class Directory(FilesystemObject):
+    """Can be used as: **input parameter** and **output parameter**
+
+    Represents the contents of directory. It can also be used with the
+    **with**-keyword to change the directory temporarily to this
+    directory::
+
+       with directory as dir:
+          # Do something with adjusted current working directory
+          print os.curdir
+    """
+
     def __init__(self, default_filename=""):
         FilesystemObject.__init__(self, default_filename)
         self.__value = None
@@ -153,7 +185,7 @@ class Directory(FilesystemObject):
 
     @property
     def value(self):
-        """Return of directories and files in given directory"""
+        """:return: list -- directories and files in given directory"""
         if not self.__value:
             self.__value = os.listdir(self.path)
         return self.__value
@@ -166,7 +198,9 @@ class Directory(FilesystemObject):
             f.outp_tear_down_output()
 
     def new_file(self, name):
-        """Generate a new File (versuchung.types.File) in directory."""
+        """Generate a new :class:`~versuchung.types.File` in the
+        directory. It will be flushed automatically if the experiment
+        is over."""
         f = File(name)
         f.base_directory = self.path
         self.__new_files.append(f)
