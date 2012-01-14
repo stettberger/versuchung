@@ -3,6 +3,7 @@
 import logging
 from subprocess import *
 import os
+from versuchung.files import CSV_File
 
 def shell(command, *args):
     """
@@ -24,3 +25,6 @@ def shell(command, *args):
         stdout = stdout[:-1]
     return (stdout.__str__().rsplit('\n'), p.returncode)
 
+
+class PsMonitor(CSV_File):
+    pass

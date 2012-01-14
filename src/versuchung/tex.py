@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from versuchung.types import File
+from versuchung.files import File
 import re
 
 class Macros(File):

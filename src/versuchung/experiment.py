@@ -4,7 +4,8 @@ from optparse import OptionParser
 import datetime
 import logging
 import pprint
-from versuchung.types import InputParameter, OutputParameter, Type, Directory
+from versuchung.types import InputParameter, OutputParameter, Type
+from versuchung.files import Directory
 from versuchung.tools import JavascriptStyleDictAccess, setup_logging
 import sys, os
 import hashlib

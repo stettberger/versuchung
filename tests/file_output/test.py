@@ -1,5 +1,6 @@
 from versuchung.experiment import Experiment
-from versuchung.types import String, File
+from versuchung.types import String
+from versuchung.files import File
 
 class SimpleExperiment(Experiment):
     inputs = {"input_key": String("default key"),

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-from versuchung.types import Type, InputParameter, Directory
+from versuchung.types import Type, InputParameter
+from versuchung.files import Directory
 from versuchung.execute import shell
 import logging
 import os

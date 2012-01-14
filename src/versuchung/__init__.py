@@ -1,3 +1,3 @@
-__all__ = ["archives", "experiment", "tex", "types", "tools"]
+__all__ = ["archives", "experiment", "files", "tex", "types", "tools"]
 
 from . import *

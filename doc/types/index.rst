@@ -13,4 +13,5 @@ results. They are used in
    :maxdepth: 2
 
    basic_types
+   filesystem
    archives
