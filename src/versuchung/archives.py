@@ -14,11 +14,11 @@ class TarArchive(Type, InputParameter):
     """This parameter needs an tmp_directory to extract the archive"""
     tmp_directory = None
 
-    def __init__(self, default_filename = None):
+    def __init__(self, filename = None):
         """The default_filename is either a string to a file. Or a
-        object with a path attribute (e.g. a vamos.types.FileSystemObject)"""
+        object with a path attribute (e.g. a versuchung.types.FileSystemObject)"""
         Type.__init__(self)
-        self.__filename = default_filename
+        self.__filename = filename
         self.__value = None
 
     def inp_setup_cmdline_parser(self, parser):
@@ -31,11 +31,12 @@ class TarArchive(Type, InputParameter):
         return {self.name: self.__filename}
 
     def __setup_value(self):
-        fn = self.__filename
         if "path" in dir(self.__filename):
-            fn = self.__filename.path
+            self.propagate_meta_data("filename", self.__filename)
+            self.__filename = self.__filename.path
 
-        fn = os.path.abspath(fn)
+        self.__filename = os.path.abspath(self.__filename)
+        fn = self.__filename
 
         extract_mode = ""
         if "tar.gz" in fn or "tgz" in fn:
@@ -61,7 +62,7 @@ class TarArchive(Type, InputParameter):
 
     @property
     def value(self):
-        """Return a vamos.types.Directory instance to the extracted
+        """Return a :py:class:`versuchung.types.Directory` instance to the extracted
         tar archive. If it contains only one directory the instance
         will point there. Otherwise it will point to a directory
         containing the contents of the archive"""
@@ -110,9 +111,7 @@ class GitArchive(InputParameter, Type):
 
     def __setup_value(self):
         if "path" in dir(self.__clone_url):
-            if hasattr(self.__clone_url, "tmp_directory"):
-                self.__clone_url.name = self.name + "-clone-url"
-                self.__clone_url.tmp_directory = self.tmp_directory
+            self.propagate_meta_data("clone-url", self.__clone_url)
             self.__clone_url = self.__clone_url.path
 
         logging.info("copying git archive %s", self.__clone_url)

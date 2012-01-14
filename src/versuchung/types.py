@@ -25,6 +25,13 @@ class Type(object):
     def base_directory(self, value):
         self.__base_directory = value
 
+    def propagate_meta_data(self, subname, other, fields = ["base_directory", "tmp_directory"]):
+        other.name = self.name + "-" + subname
+        for field in fields:
+            if field in dir(self) and field in dir(other):
+                # Copy the value
+                setattr(other, field, getattr(self, field))
+
 class InputParameter:
     def inp_setup_cmdline_parser(self, parser):
         raise NotImplemented
@@ -72,6 +79,8 @@ class String(InputParameter, Type):
 
     @property
     def value(self):
+        """The value of the string. This is either the default value
+        or the parameter given on the command line"""
         return self.__value
 
 class FilesystemObject(InputParameter, OutputParameter, Type):
