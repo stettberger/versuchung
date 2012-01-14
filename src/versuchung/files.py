@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 from versuchung.types import InputParameter, OutputParameter, Type
+from cStringIO import StringIO
+import csv
 import os
 
 class FilesystemObject(InputParameter, OutputParameter, Type):
@@ -174,7 +176,7 @@ class CSV_File(File):
 
         :param row: row to append
         :type row: list."""
-        if type(value) != list:
+        if type(row) != list:
             raise TypeError("list of values required")
-        self.value.append(value)
+        self.value.append(row)
 
