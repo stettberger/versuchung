@@ -44,8 +44,12 @@ class File(FilesystemObject):
         """This attribute can be read and written and represent the
         exact content of the specified file"""
         if not self.__value:
-            with open(self.path) as fd:
-                self.__value = self.after_read(fd.read())
+            try:
+                with open(self.path) as fd:
+                    self.__value = self.after_read(fd.read())
+            except IOError:
+                # File couldn't be read
+                self.__value = ""
         return self.__value
     @value.setter
     def value(self, value):

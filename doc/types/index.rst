@@ -14,5 +14,6 @@ results. They are used in
 
    basic_types
    filesystem
+   tex
    archives
    tools

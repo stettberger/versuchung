@@ -17,7 +17,7 @@ class TarArchive(Type, InputParameter):
 
     def __init__(self, filename = None):
         """The default_filename is either a string to a file. Or a
-        object with a path attribute (e.g. a versuchung.types.FileSystemObject)"""
+        object with a path attribute (e.g. a :class:`~versuchung.files.File`)"""
         Type.__init__(self)
         self.__filename = filename
         self.__value = None
@@ -63,7 +63,7 @@ class TarArchive(Type, InputParameter):
 
     @property
     def value(self):
-        """Return a :py:class:`versuchung.types.Directory` instance to the extracted
+        """Return a :class:`versuchung.types.Directory` instance to the extracted
         tar archive. If it contains only one directory the instance
         will point there. Otherwise it will point to a directory
         containing the contents of the archive"""
