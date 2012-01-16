@@ -169,7 +169,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
 
     def checkout_ref(self):
         """Return git ref which was checked out"""
-        return self.__checkout_branch
+        return self.__ref
 
     def inp_metadata(self):
         return {self.name + "-clone-url": str(self.__clone_url),
@@ -185,7 +185,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         with self.tmp_directory as d:
             os.mkdir(self.name)
             if self.__shallow:
-                cmd = "cd '%s' && git archive --format=tar --remote='%s' '%s' | tar x"
+                cmd = "cd '%s' && git archive --format=tar --remote=%s %s | tar x"
                 args = (self.name,
                         self.__clone_url,
                         self.__ref)

@@ -94,5 +94,5 @@ class PgfKeyDict(File, dict):
 
     def before_write(self, value):
         v = [self.__format % (self.__pgfkey, key, value) for (key, value) in self.items()]
-        return "\n".join(v)
+        return "\n".join(v) + "\n"
 
