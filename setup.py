@@ -4,6 +4,12 @@ from distutils.core import setup
 from distutils.cmd import Command
 from distutils.spawn import spawn
 
+from doc.conf import release, version
+
+name = "versuchung"
+
+print "version: " + version
+print "release: " + release
 
 try:
     from sphinx.setup_command import BuildDoc
@@ -25,10 +31,6 @@ class TestCommand(Command):
         pass
 
 cmdclass["test"] = TestCommand
-
-name = "versuchung"
-version = "0.1"
-release = "0.1.0"
 
 setup(name=name,
       version=version,
