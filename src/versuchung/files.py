@@ -2,6 +2,7 @@
 
 from versuchung.types import InputParameter, OutputParameter, Type
 from cStringIO import StringIO
+import shutil
 import csv
 import os
 
@@ -136,6 +137,24 @@ class Directory(FilesystemObject, Directory_op_with):
         f.base_directory = self.path
         self.__new_files.append(f)
         return f
+
+    def mirror_directory(self, path):
+        """Copies the contents of the given directory to this
+        directory."""
+
+        if not os.path.exists(path) and os.path.isdir(path):
+            raise RuntimeError("Argument is no directory")
+
+        for root, dirs, files in os.walk(path):
+            for d in dirs:
+                p = os.path.join(self.path, d)
+                if not os.path.isdir(p):
+                    os.mkdir(p)
+            for f in files:
+                src = os.path.join(path, f)
+                dst = os.path.join(self.path, f)
+                shutil.copyfile(src,dst)
+
 
 class CSV_File(File):
     """Can be used as: **input parameter** and **output parameter**
