@@ -142,7 +142,7 @@ class Experiment(Type, InputParameter):
                 outp.tmp_directory = self.tmp_directory
 
     def execute(self, args = [], **kwargs):
-        """Calling this method will be executed.
+        """Calling this method will execute the experiment
 
         :param args: The command line arguments, normally ``sys.argv``
         :type args: list.
@@ -207,7 +207,8 @@ class Experiment(Type, InputParameter):
         return self.__experiment_instance
 
     __call__ = execute
-    """A experiment can also executed by calling it, :attr:`execute` will be called.
+    """A experiment can also executed by calling it, :attr:`execute`
+    will be called.
 
     >>> experiment(sys.argv)"""
 
@@ -229,8 +230,9 @@ class Experiment(Type, InputParameter):
             metadata.update( self.inputs[name].inp_metadata() )
         m = hashlib.md5()
         m.update("version %d" % self.version)
-        for key in sorted(metadata.keys()):
-            m.update(key + " " + metadata[key])
+        calc_metadata = self.filter_metadata(metadata)
+        for key in sorted(calc_metadata.keys()):
+            m.update(key + " " + calc_metadata[key])
 
         self.__experiment_instance = "%s-%s" %(self.title, m.hexdigest())
         output_path = os.path.join(self.pwd, self.__experiment_instance)
@@ -274,3 +276,10 @@ class Experiment(Type, InputParameter):
         directory is set up. Afterwards all temporary data is removed
         and the output parameters are deinitialized."""
         raise NotImplemented
+
+    def filter_metadata(self, metadata):
+        """This method is invocated on the dict which is stored in
+        $result_dir/metadata before the result_hash is
+        calculated. This helps to take influence on the input
+        parameters which alter the experiment hash. So use it with care."""
+        return metadata
