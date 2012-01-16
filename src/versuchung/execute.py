@@ -30,6 +30,9 @@ def shell(command, *args):
         stdout = stdout[:-1]
     return (stdout.__str__().rsplit('\n'), p.returncode)
 
+def add_sys_path(path):
+    """Add path to the PATH environment variable"""
+    os.environ["PATH"] = path + ":" + os.environ["PATH"]
 
 class PsMonitor(CSV_File):
     """Can be used as: **input parameter** and **output parameter**

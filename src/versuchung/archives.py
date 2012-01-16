@@ -42,6 +42,9 @@ class TarArchive(Type, InputParameter, Directory_op_with):
 
     def inp_extract_cmdline_parser(self, opts, args):
         self.__filename = self.inp_parser_extract(opts, None)
+        if "path" in dir(self.__filename):
+            self.propagate_meta_data("filename", self.__filename)
+            self.__filename = self.__filename.path
 
     def inp_metadata(self):
         return {self.name: self.__filename}
@@ -50,6 +53,7 @@ class TarArchive(Type, InputParameter, Directory_op_with):
         if "path" in dir(self.__filename):
             self.propagate_meta_data("filename", self.__filename)
             self.__filename = self.__filename.path
+
 
         self.__filename = os.path.abspath(self.__filename)
         fn = self.__filename
@@ -131,6 +135,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         self.__ref = ref
         self.__shallow = shallow
         self.__value = None
+        self.__hash = None
 
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, "clone-url", self.__clone_url)
@@ -141,10 +146,35 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         self.__clone_url = self.inp_parser_extract(opts, "clone-url")
         self.__ref = self.inp_parser_extract(opts, "ref")
 
+        if "path" in dir(self.__clone_url):
+            self.propagate_meta_data("clone-url", self.__clone_url)
+            self.__clone_url = self.__clone_url.path
+
+    def checkout_hash(self):
+        """Return the hash of the HEAD commit hash as string"""
+        if not self.__hash:
+            cmd = "git ls-remote %s %s" % (self.__clone_url,
+                                           self.__ref)
+
+            (lines, ret) = shell(cmd)
+            if ret != 0 or lines == 0:
+                print "\n".join(lines)
+                sys.exit(-1)
+
+            self.__hash = lines[0].split("\t")[0]
+            if self.__hash == "":
+                self.__hash = self.__ref
+
+        return self.__hash
+
+    def checkout_ref(self):
+        """Return git ref which was checked out"""
+        return self.__checkout_branch
 
     def inp_metadata(self):
         return {self.name + "-clone-url": str(self.__clone_url),
-                self.name + "-ref": self.__ref}
+                self.name + "-ref": self.__ref,
+                self.name + "-hash": self.checkout_hash()}
 
     def __setup_value(self):
         if "path" in dir(self.__clone_url):
@@ -180,7 +210,6 @@ class GitArchive(InputParameter, Type, Directory_op_with):
 
 
             return Directory(os.path.abspath(self.name))
-
 
     @property
     def value(self):
