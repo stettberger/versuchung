@@ -78,7 +78,7 @@ class PsMonitor(CSV_File):
         self.capture = capture
 
     def __get_cpu(self):
-        return [self.psutil.cpu_percent(interval=0)]
+        return [self.psutil.cpu_percent()]
 
     def __get_memory(self):
         phymem = self.psutil.phymem_usage()

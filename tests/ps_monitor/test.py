@@ -12,6 +12,11 @@ class SimpleExperiment(Experiment):
 
 if __name__ == "__main__":
     import shutil, sys
+    import psutil
+    if not "phymem_usage" in dir(psutil):
+        print "skipped"
+        sys.exit(0)
+
     experiment = SimpleExperiment()
     dirname = experiment(sys.argv)
 
