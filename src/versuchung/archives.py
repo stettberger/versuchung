@@ -1,18 +1,33 @@
 #!/usr/bin/python
 
 from versuchung.types import Type, InputParameter
-from versuchung.files import Directory
+from versuchung.files import Directory, Directory_op_with
 from versuchung.execute import shell
 import logging
 import os
 import sys
 
-class TarArchive(Type, InputParameter):
-    """Use a tar archive as input parameter. The archive will be
-       extracted to the temporary directory. So it will be cleaned
-       afterwards."""
+class TarArchive(Type, InputParameter, Directory_op_with):
+    """Can be used as: **input parameter**
 
-    """This parameter needs an tmp_directory to extract the archive"""
+    The archive will be extracted to a temporary directory. It will be
+    removed after the experiment is over.
+
+    ``clone_url`` can either be a :class:`string` or any object that
+    has a ``.path`` attribute (like
+    e.g. :class:`~versuchung.filesystems.File`). Of course the
+    referenced file must be a single file.
+
+    This parameter can be used as argument to the with keyword, to
+    change to the temporary directory::
+
+        with self.inputs.tar_archive as path:
+            # Here we have path == os.path.abspath(os.curdir)
+            # Do something in the extracted copy
+            print path
+    """
+
+    # This parameter needs an tmp_directory to extract the archive
     tmp_directory = None
 
     def __init__(self, filename = None):
@@ -63,7 +78,7 @@ class TarArchive(Type, InputParameter):
 
     @property
     def value(self):
-        """Return a :class:`versuchung.types.Directory` instance to the extracted
+        """Return a :class:`versuchung.files.Directory` instance to the extracted
         tar archive. If it contains only one directory the instance
         will point there. Otherwise it will point to a directory
         containing the contents of the archive"""
@@ -77,7 +92,28 @@ class TarArchive(Type, InputParameter):
         return self.value.path
 
 
-class GitArchive(InputParameter, Type):
+class GitArchive(InputParameter, Type, Directory_op_with):
+    """Can be used as: **input parameter**
+
+    The in ``clone_url`` given git repository will be cloned to a
+    temporary directory. It will be removed after the experiment is
+    over. If ``shallow == True`` Only the files and not the .git is
+    copied (cloned). This is especially useful for large git
+    repositories like the Linux kernel tree.
+
+    ``clone_url`` can either be a :class:`string` or any object that
+    has a ``.path`` attribute (like e.g. :class:`TarArchive`). Of
+    course the refenced path must be a directory.
+
+    This parameter can be used as argument to the with keyword, to
+    change to the temporary directory::
+
+        with self.inputs.git_archive as path:
+            # Here we have path == os.path.abspath(os.curdir)
+            # Do something in the extracted copy
+            print path
+    """
+
     """This parameter needs an tmp_directory to clone the archive"""
     tmp_directory = None
 
@@ -148,7 +184,13 @@ class GitArchive(InputParameter, Type):
 
     @property
     def value(self):
-        """Return a vamos.types.Directory instance to the cloned git directory"""
+        """Return a vamos.files.Directory instance to the cloned git directory"""
         if not self.__value:
             self.__value = self.__setup_value()
         return self.__value
+
+    @property
+    def path(self):
+        """Return the string to the extract directory (same as .value.path)"""
+        return self.value.path
+

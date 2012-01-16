@@ -2,6 +2,7 @@
 
 from versuchung.experiment import Experiment
 from versuchung.archives import TarArchive, GitArchive
+import os
 
 class GitArchiveTest(Experiment):
     inputs = {"git": GitArchive(TarArchive("origin.tar.gz")),
@@ -14,6 +15,10 @@ class GitArchiveTest(Experiment):
 
         directory = self.i.git_bare.value
         assert set(["TEST", "ABC"]) == set(directory.value)
+
+        with self.i.git as path:
+            assert path == self.i.git.value.path
+            assert os.path.abspath(os.curdir) == path
 
         print "success"
 

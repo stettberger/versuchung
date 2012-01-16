@@ -88,7 +88,16 @@ class File(FilesystemObject):
         This method gets the value() and returns a string, when the file is written to disk"""
         return value
 
-class Directory(FilesystemObject):
+class Directory_op_with:
+    def __enter__(self):
+        self.olddir = os.path.abspath(os.curdir)
+        os.chdir(self.path)
+        return self.path
+    def __exit__(self, *excinfo):
+        os.chdir(self.olddir)
+
+
+class Directory(FilesystemObject, Directory_op_with):
     """Can be used as: **input parameter** and **output parameter**
 
     Represents the contents of directory. It can also be used with the
@@ -127,13 +136,6 @@ class Directory(FilesystemObject):
         f.base_directory = self.path
         self.__new_files.append(f)
         return f
-
-    def __enter__(self):
-        self.olddir = os.path.abspath(os.curdir)
-        os.chdir(self.path)
-        return self
-    def __exit__(self, *excinfo):
-        os.chdir(self.olddir)
 
 class CSV_File(File):
     """Can be used as: **input parameter** and **output parameter**
