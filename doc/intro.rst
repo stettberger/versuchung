@@ -35,21 +35,21 @@ complete experiment and a runnable python script with a command line
 parser to override the default experiment input parameters. 
 
 Every experiment inherits from the
-:py:class:`~versuchung.experiment.Experiment` class to gain the basic
+:class:`~versuchung.experiment.Experiment` class to gain the basic
 structure for parameter handling and running the experiment. After
 that the member variable
-:py:attr:`~versuchung.experiment.Experiment.inputs` defines a
-:py:class:`dict` of the input parameters. In this case two such input
+:attr:`~versuchung.experiment.Experiment.inputs` defines a
+:class:`dict` of the input parameters. In this case two such input
 parameters are defined ``"input_key"`` and ``"input_value"``, which
-are both of type :py:class:`~versuchung.types.String` and have a
+are both of type :class:`~versuchung.types.String` and have a
 specified default value. This default value is used if no argument is
 given on the command line. The attribute
-:py:attr:`~versuchung.experiment.Experiment.outputs` defines the
+:attr:`~versuchung.experiment.Experiment.outputs` defines the
 output parameter ``"output_file"`` which is of type
-:py:class:`~versuchung.types.File` with the filename ``"output"``. So
+:class:`~versuchung.types.File` with the filename ``"output"``. So
 in the experiment output there will be a file called *output*.
 
-The :py:meth:`~versuchung.experiment.Experiment.run` method is the
+The :meth:`~versuchung.experiment.Experiment.run` method is the
 hearth of every experiment. It is called when all input parameters are
 gathered and experiment enviroment is set up. In this
 ``SimpleExperiment`` the input parameters are simply concatenated and
