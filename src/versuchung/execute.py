@@ -8,15 +8,25 @@ import resource
 import thread
 import time
 
+class CommandFailed(RuntimeError):
+    """ Indicates that some command failed
 
-def shell(command, *args):
+    Attributes:
+        command    -- the command that failed
+        returncode -- the exitcode of the failed command
     """
-    executes 'command' in a shell
+    def __init__(self, command, returncode):
+        assert(returncode != 0)
+        self.command = command
+        self.returncode = returncode
+        self.repr = "Command %s failed to execute (returncode: %d)" % \
+            (command, returncode)
+        RuntimeError.__init__(self, self.repr)
+    def __str__(self):
+        return self.repr
 
-    returns a tuple with
-        1. the command's standard output as list of lines
-        2. the exitcode
-    """
+
+def __shell(failok, command, *args):
     os.environ["LC_ALL"] = "C"
 
     args = ["'%s'"%x.replace("'", "\'") for x in args]
@@ -28,11 +38,35 @@ def shell(command, *args):
     p.wait()
     if len(stdout) > 0 and stdout[-1] == '\n':
         stdout = stdout[:-1]
+
+    if p.returncode != 0:
+        raise CommandFailed(command, p.returncode)
+
     return (stdout.__str__().rsplit('\n'), p.returncode)
+
+
+def shell(command, *args):
+    """
+    executes 'command' in a shell
+
+    returns a tuple with
+        1. the command's standard output as list of lines
+        2. the exitcode
+
+        If the return code is !=0 throw a CommandFailed Exception.
+    """
+    return __shell(False, command, *args)
+
+
+def shell_failok(command, *args):
+    """Like :meth:`.shell`, but the throws no exception"""
+    return __shell(True, command, *args)
+
 
 def add_sys_path(path):
     """Add path to the PATH environment variable"""
     os.environ["PATH"] = path + ":" + os.environ["PATH"]
+
 
 class PsMonitor(CSV_File):
     """Can be used as: **input parameter** and **output parameter**

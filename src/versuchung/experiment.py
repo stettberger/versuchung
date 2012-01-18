@@ -90,8 +90,6 @@ class Experiment(Type, InputParameter):
         """
 
         self.title = self.__class__.__name__
-        self.name  = default_experiment_instance
-
         self.__experiment_instance = default_experiment_instance
         # Copy input and output objects
         self.inputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.inputs))
@@ -190,7 +188,6 @@ class Experiment(Type, InputParameter):
                 (opts, args) = ret
 
         self.__experiment_instance = self.__setup_output_directory()
-        self.name = self.__experiment_instance
         self.__output_directory = os.path.join(self.pwd, self.__experiment_instance)
 
         for (name, outp) in self.outputs.items():
@@ -260,14 +257,13 @@ class Experiment(Type, InputParameter):
 
     def inp_extract_cmdline_parser(self, opts, args):
         self.__experiment_instance = self.inp_parser_extract(opts, None)
-        self.name = self.__experiment_instance
         if not self.__experiment_instance:
             print "Missing argument for %s" % self.title
             raise ExperimentError
         for (name, outp) in self.outputs.items():
             outp.base_directory = os.path.join(self.base_directory, self.__experiment_instance)
     def inp_metadata(self):
-        return {self.title: self.__experiment_instance}
+        return {self.name: self.__experiment_instance}
 
     def run(self):
         """This method is the hearth of every experiment and must be
