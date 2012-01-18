@@ -81,6 +81,12 @@ class File(FilesystemObject):
                 v = ""
             fd.write(v)
 
+    def copy_contents(self, filename):
+        """Read the given file and replace the current .value with the
+        files content"""
+        with open(filename) as fd:
+            self.value = self.after_read(fd.read())
+
     def after_read(self, value):
         """To provide filtering of file contents in subclasses, overrwrite this method.
         It is gets the file content as a string and returns the value()"""
@@ -166,6 +172,7 @@ class Directory(FilesystemObject, Directory_op_with):
                 dst = os.path.join(self.path, f)
                 shutil.copyfile(src,dst)
 
+        self.__value = None
 
 class CSV_File(File):
     """Can be used as: **input parameter** and **output parameter**
