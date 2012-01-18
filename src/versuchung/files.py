@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from versuchung.types import InputParameter, OutputParameter, Type
+from versuchung.tools import before
 from cStringIO import StringIO
 import shutil
 import csv
@@ -115,6 +116,13 @@ class Directory(FilesystemObject, Directory_op_with):
         self.__value = None
         self.__new_files = []
 
+    def ___ensure_dir_exists(self):
+        if not os.path.exists(self.path):
+            os.mkdir(self.path)
+
+    # Ensure dir exists DECORATOR
+    __ensure_dir_exists = before(___ensure_dir_exists)
+
     @property
     def value(self):
         """:return: list -- directories and files in given directory"""
@@ -122,13 +130,15 @@ class Directory(FilesystemObject, Directory_op_with):
             self.__value = os.listdir(self.path)
         return self.__value
 
+    @__ensure_dir_exists
     def outp_setup_output(self):
-        os.mkdir(self.path)
+        pass
 
     def outp_tear_down_output(self):
         for f in self.__new_files:
             f.outp_tear_down_output()
 
+    @__ensure_dir_exists
     def new_file(self, name):
         """Generate a new :class:`~versuchung.files.File` in the
         directory. It will be flushed automatically if the experiment
@@ -138,6 +148,7 @@ class Directory(FilesystemObject, Directory_op_with):
         self.__new_files.append(f)
         return f
 
+    @__ensure_dir_exists
     def mirror_directory(self, path):
         """Copies the contents of the given directory to this
         directory."""
