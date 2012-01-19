@@ -162,14 +162,17 @@ class Directory(FilesystemObject, Directory_op_with):
         if not os.path.exists(path) and os.path.isdir(path):
             raise RuntimeError("Argument is no directory")
 
+        path = os.path.abspath(path)
+
         for root, dirs, files in os.walk(path):
+            root = root[len(path)+1:]
             for d in dirs:
-                p = os.path.join(self.path, d)
+                p = os.path.join(self.path, root, d)
                 if not os.path.isdir(p):
                     os.mkdir(p)
             for f in files:
-                src = os.path.join(path, f)
-                dst = os.path.join(self.path, f)
+                src = os.path.join(path, root, f)
+                dst = os.path.join(self.path, root, f)
                 shutil.copyfile(src,dst)
 
         self.__value = None

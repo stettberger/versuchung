@@ -12,6 +12,8 @@ class SimpleExperiment(Experiment):
         a.value="abc"
         a.flush()
         os.mkdir(self.o.dir1.path + "/tmpdir")
+        with open(self.o.dir1.path + "/tmpdir/foo", "w+") as fd:
+            fd.write("Hallo")
 
         self.o.dir2.mirror_directory(self.o.dir1.path)
 
@@ -22,6 +24,7 @@ if __name__ == "__main__":
 
     assert os.path.isdir(experiment.o.dir2.path + "/tmpdir")
     assert os.path.exists(experiment.o.dir2.path + "/barfoo")
+    assert os.path.exists(experiment.o.dir2.path + "/tmpdir/foo")
 
     if dirname:
         shutil.rmtree(dirname)
