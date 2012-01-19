@@ -31,10 +31,15 @@ class FilesystemObject(InputParameter, OutputParameter, Type):
 class File(FilesystemObject):
     """Can be used as: **input parameter** and **output parameter**
 
-    The File type represents the content of a single file. Its
-    contents can be read, overwritten and content can be appended. But
-    be aware, that the content is just flushed after the experiment is
-    over. If you want to do this manually use :meth:`flush`.
+    The File type represents the content of a single file. Its contents
+    can be read and written most easily with the :attr:`value` property.
+
+    Alternatively, the method :meth:`write` appends new content if the
+    parameter `append` is set to `True`.
+
+    NB: The content of the file is flushed only after the experiment
+    finishes.  Use :meth:`flush` to force writing the buffered data to
+    disk before the experiment finishes.
     """
 
     def __init__(self, default_filename=""):
@@ -44,7 +49,7 @@ class File(FilesystemObject):
     @property
     def value(self):
         """This attribute can be read and written and represent the
-        exact content of the specified file"""
+        content of the specified file"""
         if not self.__value:
             try:
                 with open(self.path) as fd:
@@ -53,13 +58,15 @@ class File(FilesystemObject):
                 # File couldn't be read
                 self.__value = ""
         return self.__value
+
     @value.setter
     def value(self, value):
         self.__value = value
 
     def write(self, content, append = False):
-        """Similar to :attr:`value`. If append is false :attr:`value`
-        is overwritten, otherwise the content is appendend"""
+        """Similar to the :attr:`value` property. If the parameter
+        `append` is `False`, then the property :attr:`value` is reset
+        (i.e., overwritten), otherwise the content is appendend"""
         if append:
             self.value += content
         else:
@@ -91,6 +98,7 @@ class File(FilesystemObject):
         """To provide filtering of file contents in subclasses, overrwrite this method.
         It is gets the file content as a string and returns the value()"""
         return value
+
     def before_write(self, value):
         """To provide filtering of file contents in subclasses, overrwrite this method.
         This method gets the value() and returns a string, when the file is written to disk"""
