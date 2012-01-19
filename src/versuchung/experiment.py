@@ -285,12 +285,17 @@ class Experiment(Type, InputParameter):
         implemented by the user. It is called when the experiment is
         executed. Before all input parameters are parsed, the output
         directory is set up. Afterwards all temporary data is removed
-        and the output parameters are deinitialized."""
+        and the output parameters are deinitialized.
+
+        .. warning:: Must be implemented by the user."""
         raise NotImplemented
 
     def filter_metadata(self, metadata):
         """This method is invocated on the dict which is stored in
         $result_dir/metadata before the result_hash is
         calculated. This helps to take influence on the input
-        parameters which alter the experiment hash. So use it with care."""
+        parameters which alter the experiment hash. So use it with care.
+
+        .. note:: Can be implemented by the user."""
+
         return metadata
