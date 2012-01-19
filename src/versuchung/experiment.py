@@ -91,6 +91,7 @@ class Experiment(Type, InputParameter):
 
         self.title = self.__class__.__name__
         self.__experiment_instance = default_experiment_instance
+        self.__metadata = None
         # Copy input and output objects
         self.inputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.inputs))
         self.i = self.inputs
@@ -249,6 +250,8 @@ class Experiment(Type, InputParameter):
         fd.write(pprint.pformat(metadata) + "\n")
         fd.close()
 
+        self.__metadata = metadata
+
         return self.__experiment_instance
 
     ### Input Type
@@ -264,6 +267,18 @@ class Experiment(Type, InputParameter):
             outp.base_directory = os.path.join(self.base_directory, self.__experiment_instance)
     def inp_metadata(self):
         return {self.name: self.__experiment_instance}
+
+    @property
+    def metadata(self):
+        """Return the metadata as python dict. This works for
+        experiments, which are running at the moment, and for already
+        run experiments by reading the /metadata file."""
+        if not self.__metadata:
+            md_path = os.path.join(self.base_directory, self.__experiment_instance,
+                                   "metadata")
+            with open(md_path) as fd:
+                self.__metadata = eval(fd.read())
+        return self.__metadata
 
     def run(self):
         """This method is the hearth of every experiment and must be
