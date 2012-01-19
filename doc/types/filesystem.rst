@@ -6,6 +6,3 @@ Filesystem parameters
 
 .. autoclass:: versuchung.files.Directory
 	:members: path,value,new_file
-
-.. autoclass:: versuchung.files.CSV_File
-	:members: path,flush,value,append
