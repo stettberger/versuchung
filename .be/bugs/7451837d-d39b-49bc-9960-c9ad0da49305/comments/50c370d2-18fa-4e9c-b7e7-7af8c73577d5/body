@@ -1,0 +1,4 @@
+I want to do something like:
+
+inputs = { Dict({'x86': InferenceStats("fooo"),
+		 's390': InferenceStats("barfoo")})}
