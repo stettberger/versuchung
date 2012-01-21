@@ -68,30 +68,25 @@ def add_sys_path(path):
     os.environ["PATH"] = path + ":" + os.environ["PATH"]
 
 
-class PsMonitor(CSV_File):
+class MachineMonitor(CSV_File):
     """Can be used as: **input parameter** and **output parameter**
 
     With this parameter the systems status during the experiment can
     be monitored. The tick interval can specified on creation and also
     what values should be captured.
 
-    This parameter creates two :class:`~versuchung.files.CSV_File`
-    one with the given name, and one with the suffix ".events". When
-    the experiment starts the monitor fires up a thread which will
-    every ``tick_interval`` milliseconds capture the status of the
-    system and store the information as a row in the normal csv.
-
-    If :meth:`~.shell` is used instead of
-    :func:`~versuchung.execute.shell` the started shell processes are
-    logged to the ``".events"``-file.
+    This parameter creates a :class:`~versuchung.files.CSV_File` with
+    the given name. When the experiment starts the monitor fires up a
+    thread which will every ``tick_interval`` milliseconds capture the
+    status of the system and store the information as a row in the
+    normal csv.
 
     A short example::
 
         class SimpleExperiment(Experiment):
-            outputs = {"ps": PsMonitor("ps_monitor", tick_interval=100)}
+            outputs = {"ps": MachineMonitor("ps_monitor", tick_interval=100)}
 
             def run(self):
-                shell = self.o.ps.shell
                 shell("sleep 1")
                 shell("seq 1 100000 | while read a; do echo > /dev/null; done")
                 shell("sleep 1")
@@ -120,7 +115,7 @@ class PsMonitor(CSV_File):
     def __get_memory(self):
         phymem = self.psutil.phymem_usage()
         virtmem = self.psutil.virtmem_usage()
-        cached = self.psutil.cached_phymem()
+        cached = self.psutil.cachedphymem()
         buffers = self.psutil.phymem_buffers()
 
         return [phymem.total, phymem.used, phymem.free,
@@ -209,16 +204,6 @@ class PsMonitor(CSV_File):
     strings in this list. E.g. The unix time is the first field of the
     csv file."""
 
-    def shell(self, command, *args):
-        """Like :func:`~versuchung.execute.shell`, but logs the start
-        and stop of the process in the ``".events"``-file."""
-
-        _args = ["'%s'"%x.replace("'", "\'") for x in args]
-        _command = command % tuple(_args)
-
-        self.event_file.append([time.time(), "started", _command])
-        shell(command, *args)
-        self.event_file.append([time.time(), "stopped", _command])
 
     def extract(self, keys = ["time", "cpu_percentage"]):
         """Extract single columns from the captured
@@ -232,8 +217,3 @@ class PsMonitor(CSV_File):
                 r.append(row[index])
             ret.append(r)
         return ret
-
-    def events(self):
-        """Get the list of events. The format is ``[unix_time,
-        event_name, event_description]``"""
-        return self.event_file.value

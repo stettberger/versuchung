@@ -1,25 +1,21 @@
 from versuchung.experiment import Experiment
-from versuchung.execute import shell, PsMonitor
+from versuchung.events import EventLog
 
 class SimpleExperiment(Experiment):
-    outputs = {"ps": PsMonitor("ps_monitor", tick_interval=10)}
+    outputs = {"events": EventLog("events")}
 
     def run(self):
-        shell = self.o.ps.shell
+        shell = self.o.events.shell
         shell("sleep 0.5")
         shell("seq 1 100 | while read a; do echo > /dev/null; done")
         shell("sleep 0.5")
 
+        assert len(self.o.events.value) == 9
+        # Runtime of sleep 0.5 should be about half a second
+        assert int(self.o.events.value[2][3] * 10) in [4,5,6]
+
 if __name__ == "__main__":
     import shutil, sys
-    try:
-        import psutil
-        if not "phymem_usage" in dir(psutil):
-            print "skipped"
-            sys.exit(0)
-    except:
-        print "skipped"
-        sys.exit(0)
 
     experiment = SimpleExperiment()
     dirname = experiment(sys.argv)
