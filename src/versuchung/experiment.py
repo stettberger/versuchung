@@ -302,10 +302,32 @@ class Experiment(Type, InputParameter):
 
         return metadata
 
-    # def __getattribute__(self, name):
-    #     try:
-    #         return object.__getattribute__(self, name)
-    #     except AttributeError:
-    #         pass
-    #     raise AttributeError
+    def __getattribute__(self, name):
+         try:
+             return object.__getattribute__(self, name)
+         except AttributeError:
+             pass
+         inp = None
+         outp = None
+         try:
+             inp = getattr(self.inputs, name)
+         except AttributeError:
+             pass
+         try:
+             outp = getattr(self.outputs, name)
+         except AttributeError:
+             pass
+
+         if inp != None and outp != None:
+             raise AttributeError("'%s.%s' is ambigous, use .inputs/.outputs" %(\
+                 self.__class__.__name__,
+                 name))
+         elif inp != None:
+             return inp
+         elif outp != None:
+             return outp
+         
+         raise AttributeError("'%s' object has no attribute '%s'" %(\
+             self.__class__.__name__,
+             name))
 
