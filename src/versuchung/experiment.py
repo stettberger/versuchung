@@ -120,6 +120,8 @@ class Experiment(Type, InputParameter):
                                  default = ".")
         self.__parser.add_option('-l', '--list', dest='do_list', action='store_true',
                                  help="list all experiment results")
+        self.__parser.add_option('-s', '--symlink', dest='do_symlink', action='store_true',
+                                 help="symlink the result dir (as newest)")
         self.__parser.add_option('-v', '--verbose', dest='verbose', action='count',
                                  help="increase verbosity (specify multiple times for more)")
 
@@ -199,6 +201,16 @@ class Experiment(Type, InputParameter):
             outp.outp_tear_down_output()
 
         shutil.rmtree(self.tmp_directory.path)
+
+        # Create a Symlink to the newsest result set
+        if opts.do_symlink:
+            link = os.path.join(self.base_directory, self.title)
+            if os.path.islink(link):
+                os.unlink(path)
+            if not os.path.exists(link):
+                os.symlink(self.__experiment_instance, link)
+            else:
+                logging.warn("Didn't create symlink, %s exists and is no symlink", link)
 
         return self.__experiment_instance
 
