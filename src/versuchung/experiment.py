@@ -131,7 +131,7 @@ class Experiment(Type, InputParameter):
         output directories tmp_directory slots"""
         # Create temp directory
         self.tmp_directory = Directory(tempfile.mkdtemp())
-        self.tmp_directory.base_directory = self.pwd
+        self.tmp_directory.base_directory = self.base_directory
 
         for (name, inp) in self.inputs.items():
             if hasattr(inp, 'tmp_directory'):
@@ -164,12 +164,12 @@ class Experiment(Type, InputParameter):
         self.__setup_parser()
         (opts, args) = self.__parser.parse_args(args)
         os.chdir(opts.base_dir)
-        self.pwd = os.path.abspath(os.curdir)
+        self.base_directory = os.path.abspath(os.curdir)
         setup_logging(opts.verbose)
 
 
         if opts.do_list:
-            for experiment in os.listdir(self.pwd):
+            for experiment in os.listdir(self.base_directory):
                 if experiment.startswith(self.title):
                     self.__do_list(self.__class__(experiment))
             return None
@@ -181,18 +181,16 @@ class Experiment(Type, InputParameter):
 
         self.__setup_tmp_directory()
 
-
         for (name, inp) in self.inputs.items():
-            inp.base_directory = self.pwd
+            inp.base_directory = self.base_directory
             ret = inp.inp_extract_cmdline_parser(opts, args)
             if ret:
                 (opts, args) = ret
 
         self.__experiment_instance = self.__setup_output_directory()
-        self.__output_directory = os.path.join(self.pwd, self.__experiment_instance)
 
         for (name, outp) in self.outputs.items():
-            outp.base_directory = self.__output_directory
+            outp.base_directory = self.path
             outp.outp_setup_output()
 
         self.run()
@@ -233,12 +231,11 @@ class Experiment(Type, InputParameter):
             m.update(key + " " + calc_metadata[key])
 
         self.__experiment_instance = "%s-%s" %(self.title, m.hexdigest())
-        output_path = os.path.join(self.pwd, self.__experiment_instance)
-        if os.path.exists(output_path):
+        if os.path.exists(self.path):
             logging.info("Output directory existed already, purging it")
-            shutil.rmtree(output_path)
+            shutil.rmtree(self.path)
 
-        os.mkdir(output_path)
+        os.mkdir(self.path)
 
         # Here the hash is already calculated, so we can change the
         # metadata nonconsitent
@@ -246,7 +243,7 @@ class Experiment(Type, InputParameter):
         metadata["experiment-name"] = self.title
         metadata["experiment-version"] = self.version
 
-        fd = open(os.path.join(output_path, "metadata"), "w+")
+        fd = open(os.path.join(self.path, "metadata"), "w+")
         fd.write(pprint.pformat(metadata) + "\n")
         fd.close()
 
@@ -280,6 +277,11 @@ class Experiment(Type, InputParameter):
                 self.__metadata = eval(fd.read())
         return self.__metadata
 
+    @property
+    def path(self):
+        """Return the path to output directory"""
+        return os.path.join(self.base_directory, self.__experiment_instance)
+
     def run(self):
         """This method is the hearth of every experiment and must be
         implemented by the user. It is called when the experiment is
@@ -299,3 +301,11 @@ class Experiment(Type, InputParameter):
         .. note:: Can be implemented by the user."""
 
         return metadata
+
+    # def __getattribute__(self, name):
+    #     try:
+    #         return object.__getattribute__(self, name)
+    #     except AttributeError:
+    #         pass
+    #     raise AttributeError
+

@@ -7,6 +7,7 @@ import os
 import resource
 import thread
 import time
+from versuchung.tools import AdviceManager, Advice
 
 class CommandFailed(RuntimeError):
     """ Indicates that some command failed
@@ -45,9 +46,24 @@ def __shell(failok, command, *args):
     return (stdout.__str__().rsplit('\n'), p.returncode)
 
 
+@AdviceManager.advicable
 def shell(command, *args):
     """
     executes 'command' in a shell
+
+    If you want to capture stderr, stdout and runtime information
+    (with /usr/bin/time), setup and enable tracking with::
+
+       shell.track(experiment.path)
+
+    Tracking can be enabled and disabled during the run with::
+
+    >> shell.track.disable()
+    >> shell.track.enable()
+
+    Then files like shell_0_time, shell_0_stderr, etc. will be created
+    in the experiment.path directory. (Consider using ``self.path``
+    within a experiment)
 
     returns a tuple with
         1. the command's standard output as list of lines
@@ -57,7 +73,7 @@ def shell(command, *args):
     """
     return __shell(False, command, *args)
 
-
+@AdviceManager.advicable
 def shell_failok(command, *args):
     """Like :meth:`.shell`, but the throws no exception"""
     return __shell(True, command, *args)
@@ -66,6 +82,32 @@ def shell_failok(command, *args):
 def add_sys_path(path):
     """Add path to the PATH environment variable"""
     os.environ["PATH"] = path + ":" + os.environ["PATH"]
+
+class AdviceShellTracker(Advice):
+    def __call__(self, base_directory):
+        self.base_directory = base_directory
+        assert os.path.isdir(base_directory)
+        self.count = 0
+        # Enable the Advice
+        self.enable()
+        
+    def around(self, func, args, kwargs):
+        assert len(args) > 0
+        args = list(args)
+        cmd = "/usr/bin/time --verbose -o %s_time " + args[0] + " 2> %s_stderr"
+        base = os.path.join(self.base_directory, "shell_%d" % self.count)
+        self.count += 1
+        args = tuple([cmd, base] + args[1:] + [base])
+
+        # Dump away stdout
+        ret = func(args, kwargs)
+        with open(base + "_stdout", "w+") as fd:
+            fd.write("\n".join(ret[0]) + "\n")
+        return ret
+
+shell.track =        AdviceShellTracker("versuchung.execute.shell")
+shell_failok.track = AdviceShellTracker("versuchung.execute.shell_failok")
+
 
 
 class MachineMonitor(CSV_File):

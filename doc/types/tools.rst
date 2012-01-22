@@ -2,7 +2,7 @@ Various handy tools for experimentation
 ***************************************
 
 .. automodule:: versuchung.execute
-   :members:
+   :members: shell, shell_failok, CommandFailed, MachineMonitor
 
 .. automodule:: versuchung.events
    :members:
