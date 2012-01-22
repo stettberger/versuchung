@@ -54,3 +54,107 @@ def before(decorator_argument):
         return wrapped
     return decorator
 
+
+class Singleton(object):
+    _instance = None
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(Singleton, cls).__new__(
+                cls, *args, **kwargs)
+        return cls._instance
+
+
+class AdviceManager(Singleton):
+    def __init__(self):
+        if not "before" in dir(self):
+            self.before = dict()
+            self.around = dict()
+            self.after = dict()
+
+    def around_wrapper(self, func, last = None):
+        def wrapped(args, kwargs):
+            if last:
+                return func(last, args, kwargs)
+            else:
+                return func(*args, **kwargs)
+        return wrapped
+
+    @staticmethod
+    def advicable(func):
+        """Decorator to mark a function as advicable"""
+        if not "func_name" in dir(func):
+            raise ValueError("No function adviced")
+        full_name = "%s.%s" % (func.__module__, func.func_name)
+
+        self = AdviceManager()
+
+        if full_name in self.before:
+            raise RuntimeError("Function already marked as advicable")
+        self.before[full_name] = []
+        self.around[full_name] = []
+        self.after[full_name] = []
+
+        def wrapped(*args, **kwargs):
+            am = AdviceManager()
+            for f in am.before[full_name]:
+                ret = f(args, kwargs)
+                if ret:
+                    (args, kwargs) = ret
+
+            if len(am.around[full_name]) > 0:
+                func_ = am.around_wrapper(func, None)
+                for f in am.around[full_name]:
+                    func_ = am.around_wrapper(f, func_)
+
+                ret = func_(args, kwargs)
+            else:
+                ret = func(*args, **kwargs)
+
+            for f in am.after[full_name]:
+                ret = f(ret)
+
+            return ret
+        wrapped.__doc__ = func.__doc__
+        return wrapped
+
+
+class Advice:
+    def __init__(self, method, enabled = False):
+        self.method = method
+        am = AdviceManager()
+        self.am = am
+        if not method in am.before:
+            raise RuntimeError("Function was not marked @advicable")
+        self.enabled = False
+        if enabled:
+            self.enable()
+
+    def disable(self):
+        am = self.am
+        am.before[self.method] = [ x for x in am.before[self.method]
+                                   if x != self.before ]
+        am.around[self.method] = [ x for x in am.around[self.method]
+                                   if x != self.around ]
+        am.after[self.method] = [ x for x in am.after[self.method]
+                                  if x != self.after ]
+
+    def enable(self):
+        am = self.am
+        if self.enabled:
+            return
+        # Hook only in if the methods are overwritten
+        if self.before.im_func != Advice.before.im_func:
+            am.before[self.method].append(self.before)
+        if self.around.im_func != Advice.around.im_func:
+            am.around[self.method].append(self.around)
+        if self.after.im_func != Advice.after.im_func:
+            am.after[self.method].append(self.after)
+        self.enabled = True
+
+    def before(self, args, kwargs):
+        return (args, kwargs)
+    def around(self, func, args, kwargs):
+        return func(args, kwargs)
+    def after(self, ret):
+        return ret
+
