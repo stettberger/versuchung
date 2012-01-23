@@ -9,6 +9,7 @@ class SimpleExperiment(Experiment):
     def run(self):
         shell.track(self.path)
         shell("echo 1")
+        shell("cd %s && test -x ./sh", "/bin")
 
 if __name__ == "__main__":
     import shutil, sys

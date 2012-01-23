@@ -7,6 +7,7 @@ import os
 import resource
 import thread
 import time
+import pipes
 from versuchung.tools import AdviceManager, Advice
 
 class CommandFailed(RuntimeError):
@@ -30,7 +31,7 @@ class CommandFailed(RuntimeError):
 def __shell(failok, command, *args):
     os.environ["LC_ALL"] = "C"
 
-    args = ["'%s'"%x.replace("'", "\'") for x in args]
+    args = [pipes.quote(x) for x in args]
     command = command % tuple(args)
 
     logging.debug("executing: " + command)
@@ -93,11 +94,14 @@ class AdviceShellTracker(Advice):
         
     def around(self, func, args, kwargs):
         assert len(args) > 0
-        args = list(args)
-        cmd = "/usr/bin/time --verbose -o %s_time " + args[0] + " 2> %s_stderr"
+        command = args[0]
+        args = [pipes.quote(x) for x in list(args)[1:]]
+        command = command % tuple(args)
+
+        cmd = "/usr/bin/time --verbose -o %s_time sh -c %s 2> %s_stderr"
         base = os.path.join(self.base_directory, "shell_%d" % self.count)
         self.count += 1
-        args = tuple([cmd, base] + args[1:] + [base])
+        args = tuple([cmd, base, command, base])
 
         # Dump away stdout
         ret = func(args, kwargs)
@@ -157,7 +161,7 @@ class MachineMonitor(CSV_File):
     def __get_memory(self):
         phymem = self.psutil.phymem_usage()
         virtmem = self.psutil.virtmem_usage()
-        cached = self.psutil.cachedphymem()
+        cached = self.psutil.cached_phymem()
         buffers = self.psutil.phymem_buffers()
 
         return [phymem.total, phymem.used, phymem.free,
