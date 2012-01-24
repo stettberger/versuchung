@@ -72,7 +72,7 @@ def shell(command, *args):
         1. the command's standard output as list of lines
         2. the exitcode
 
-    :raises: :py:exc:`CommandFailed` if the returncode is != 0
+    :raises: :py:class:`CommandFailed` if the returncode is != 0
     """
     return __shell(False, command, *args)
 
