@@ -53,19 +53,33 @@ def shell(command, *args):
     """
     executes 'command' in a shell
 
-    If you want to capture stderr, stdout and runtime information
-    (with /usr/bin/time), setup and enable tracking with::
+    .. note::
 
-       shell.track(experiment.path)
+      The following command enables capturing `stderr`, `stdout` and
+      runtime information (with `/usr/bin/time`)::
 
-    Tracking can be enabled and disabled during the run with::
+        shell.track(experiment.path)
 
-    >> shell.track.disable()
-    >> shell.track.enable()
+    .. note::
 
-    Then files like ``shell_0_time``, ``shell_0_stderr``, etc. will be
-    created in the ``experiment.path`` directory. (Consider using
-    ``self.path`` within a experiment)
+      Tracking is enabled automatically after setup. It can be disabled
+      and re-enabled while running the experiment with::
+
+      >> shell.track.disable()
+      >> shell.track.enable()
+
+      The tracking feature creates files like ``shell_0_time``,
+      ``shell_0_stderr``, and so on. These files are created in the
+      ``experiment.path`` directory.
+
+    .. note::
+
+      To write the results of the tracking feature into the experiment
+      output folder, use ``self.path`` within a :meth:`run()` method of
+      an experiment::
+
+        shell.track(experiment.path)
+
 
     :rtype: a tuple with:
 
