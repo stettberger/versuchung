@@ -7,9 +7,7 @@ import pprint
 from versuchung.types import InputParameter, OutputParameter, Type
 from versuchung.files import Directory
 from versuchung.tools import JavascriptStyleDictAccess, setup_logging
-import sys
-import os.path
-import glob
+import sys, os
 import hashlib
 import shutil
 import copy
@@ -246,17 +244,10 @@ class Experiment(Type, InputParameter):
 
         self.__experiment_instance = "%s-%s" %(self.title, m.hexdigest())
         if os.path.exists(self.path):
-            logging.info("Removing all files from existing output directory")
-            for f in glob.glob(os.path.join(self.path, '*')):
-                if os.path.isdir(f):
-                    shutil.rmtree(f)
-                else:
-                    os.unlink(f)
+            logging.info("Output directory existed already, purging it")
+            shutil.rmtree(self.path)
 
-        try:
-            os.mkdir(self.path)
-        except OSError:
-            pass
+        os.mkdir(self.path)
 
         # Here the hash is already calculated, so we can change the
         # metadata nonconsitent
