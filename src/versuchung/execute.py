@@ -14,8 +14,9 @@ class CommandFailed(RuntimeError):
     """ Indicates that some command failed
 
     Attributes:
-        command    -- the command that failed
-        returncode -- the exitcode of the failed command
+        command: the command that failed
+
+        returncode:  the exitcode of the failed command
     """
     def __init__(self, command, returncode):
         assert(returncode != 0)
@@ -62,15 +63,16 @@ def shell(command, *args):
     >> shell.track.disable()
     >> shell.track.enable()
 
-    Then files like shell_0_time, shell_0_stderr, etc. will be created
-    in the experiment.path directory. (Consider using ``self.path``
-    within a experiment)
+    Then files like ``shell_0_time``, ``shell_0_stderr``, etc. will be
+    created in the ``experiment.path`` directory. (Consider using
+    ``self.path`` within a experiment)
 
-    returns a tuple with
+    :rtype: a tuple with:
+
         1. the command's standard output as list of lines
         2. the exitcode
 
-        If the return code is !=0 throw a CommandFailed Exception.
+    :raises: :py:exc:`CommandFailed` if the returncode is != 0
     """
     return __shell(False, command, *args)
 
