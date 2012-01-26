@@ -200,8 +200,8 @@ class GitArchive(InputParameter, Type, Directory_op_with):
                 sys.exit(-1)
 
             if not self.__shallow:
-                cmd = "cd %s && git checkout %s"
-                args = (self.name, self.__ref)
+                cmd = "cd %s && git fetch %s %s && git checkout FETCH_HEAD"
+                args = (self.name, self.__clone_url, self.__ref)
                 (lines, ret) = shell(cmd, *args)
 
                 if ret != 0:
