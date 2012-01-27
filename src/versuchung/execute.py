@@ -42,7 +42,7 @@ def __shell(failok, command, *args):
     if len(stdout) > 0 and stdout[-1] == '\n':
         stdout = stdout[:-1]
 
-    if p.returncode != 0:
+    if not failok and p.returncode != 0:
         raise CommandFailed(command, p.returncode)
 
     return (stdout.__str__().rsplit('\n'), p.returncode)
