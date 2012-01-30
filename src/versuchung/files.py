@@ -163,9 +163,16 @@ class Directory(FilesystemObject, Directory_op_with):
         return f
 
     @__ensure_dir_exists
-    def mirror_directory(self, path):
+    def mirror_directory(self, path, include_closure = None):
         """Copies the contents of the given directory to this
-        directory."""
+        directory.
+
+        The include closure is a function, which checks for every
+        (absolute) path in the origin directory, if it is mirrored. If
+        it is None, all files are included."""
+
+        if not include_closure:
+            include_closure = lambda arg: True
 
         if not os.path.exists(path) and os.path.isdir(path):
             raise RuntimeError("Argument is no directory")
@@ -175,11 +182,16 @@ class Directory(FilesystemObject, Directory_op_with):
         for root, dirs, files in os.walk(path):
             root = root[len(path)+1:]
             for d in dirs:
-                p = os.path.join(self.path, root, d)
-                if not os.path.isdir(p):
-                    os.mkdir(p)
+                src = os.path.join(path, root, d)
+                if not include_closure(src):
+                    continue
+                dst = os.path.join(self.path, root, d)
+                if not os.path.isdir(dst):
+                    os.mkdir(dst)
             for f in files:
                 src = os.path.join(path, root, f)
+                if not include_closure(src):
+                    continue
                 dst = os.path.join(self.path, root, f)
                 shutil.copyfile(src,dst)
 

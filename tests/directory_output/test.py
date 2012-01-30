@@ -15,7 +15,8 @@ class SimpleExperiment(Experiment):
         with open(self.o.dir1.path + "/tmpdir/foo", "w+") as fd:
             fd.write("Hallo")
 
-        self.o.dir2.mirror_directory(self.o.dir1.path)
+        self.o.dir2.mirror_directory(self.o.dir1.path,
+                                     lambda x: True)
 
 if __name__ == "__main__":
     import shutil, sys,os

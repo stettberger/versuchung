@@ -22,3 +22,4 @@ class ShellExperiment(Experiment):
 if __name__ == "__main__":
     experiment = ShellExperiment()
     experiment(sys.argv)
+    print "success"
