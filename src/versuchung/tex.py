@@ -93,6 +93,15 @@ class PgfKeyDict(File, dict):
         return self
 
     def before_write(self, value):
-        v = [self.__format % (self.__pgfkey, key, value) for (key, value) in self.items()]
+        v = []
+        last_base_key = None
+        for key in sorted(self):
+            value = self[key]
+            base_key = key[:key.rindex("/")]
+            if last_base_key and last_base_key != base_key:
+                v.append("")
+            last_base_key = base_key
+            v.append(self.__format % (self.__pgfkey, key, value))
+
         return "\n".join(v) + "\n"
 
