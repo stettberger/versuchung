@@ -97,7 +97,10 @@ class PgfKeyDict(File, dict):
         last_base_key = None
         for key in sorted(self):
             value = self[key]
-            base_key = key[:key.rindex("/")]
+            if "/" in key:
+                base_key = key[:key.rindex("/")]
+            else:
+                base_key = None
             if last_base_key and last_base_key != base_key:
                 v.append("")
             last_base_key = base_key
