@@ -20,6 +20,9 @@ class ShellExperiment(Experiment):
         shell_failok("/bin/false")
         
 if __name__ == "__main__":
+    import shutil
     experiment = ShellExperiment()
-    experiment(sys.argv)
+    dirname = experiment(sys.argv)
     print "success"
+    if dirname:
+        shutil.rmtree(dirname)
