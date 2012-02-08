@@ -90,9 +90,12 @@ class File(FilesystemObject):
 
     def copy_contents(self, filename):
         """Read the given file and replace the current .value with the
-        files content"""
+        files content.
+
+        Flushes automatically afterwards."""
         with open(filename) as fd:
             self.value = self.after_read(fd.read())
+        self.flush()
 
     def after_read(self, value):
         """To provide filtering of file contents in subclasses, overrwrite this method.
