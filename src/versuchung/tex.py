@@ -65,7 +65,10 @@ class PgfKeyDict(File, dict):
 
     In the TeX source you can do something like::
 
-      \\newcommand{\\versuchung}[1]{\\pgfkeysgetvalue{/versuchung/#1}}
+      \\usepackage{tikz}
+      \\pgfkeys{/pgf/number format/.cd,fixed,precision=1}
+      [...]
+      \\newcommand{\\versuchung}[1]{\\pgfkeysvalueof{/versuchung/#1}}
       \\versuchung{abcd}
 
     .. note::
