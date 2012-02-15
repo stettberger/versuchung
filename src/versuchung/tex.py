@@ -2,6 +2,7 @@
 
 from versuchung.files import File
 import re
+import os
 
 class Macros(File):
     """Can be used as: **input parameter** and **output parameter**
@@ -83,6 +84,10 @@ class PgfKeyDict(File, dict):
         File.__init__(self, filename)
         dict.__init__(self)
 
+        # Ensure the file is written
+        if os.path.exists(self.path):
+            a = self.value
+
     def after_read(self, value):
         regex = self.__format %(self.__pgfkey,"([^{}]*)", "([^{}]*)")
         regex.replace(r'\\', r'\\')
@@ -108,3 +113,6 @@ class PgfKeyDict(File, dict):
 
         return "\n".join(v) + "\n"
 
+if __name__ == '__main__':
+    import sys
+    print PgfKeyDict(sys.argv[1])

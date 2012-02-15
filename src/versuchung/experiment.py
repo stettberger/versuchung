@@ -100,20 +100,21 @@ class Experiment(Type, InputParameter):
         self.outputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.outputs))
         self.o = self.outputs
 
+        self.base_directory = os.path.abspath(os.curdir)
+
         for (name, inp) in self.inputs.items():
             if not isinstance(inp, InputParameter):
                 print "%s cannot be used as an input parameter" % name
                 sys.exit(-1)
             inp.name = name
 
+
         for (name, outp) in self.outputs.items():
             if not isinstance(outp, OutputParameter):
                 print "%s cannot be used as an output parameter" % name
                 sys.exit(-1)
             outp.name = name
-
-
-
+            outp.base_directory = self.path
 
     def __setup_parser(self):
         self.__parser = OptionParser("%prog <options>")
@@ -292,8 +293,7 @@ class Experiment(Type, InputParameter):
         experiments, which are running at the moment, and for already
         run experiments by reading the /metadata file."""
         if not self.__metadata:
-            md_path = os.path.join(self.base_directory, self.__experiment_instance,
-                                   "metadata")
+            md_path = os.path.join(self.path, "metadata")
             with open(md_path) as fd:
                 self.__metadata = eval(fd.read())
         return self.__metadata
@@ -301,7 +301,11 @@ class Experiment(Type, InputParameter):
     @property
     def path(self):
         """Return the path to output directory"""
-        return os.path.join(self.base_directory, self.__experiment_instance)
+        if self.__experiment_instance:
+            path = os.path.join(self.base_directory, self.__experiment_instance)
+            path = os.path.realpath(path)
+            return path
+        return None
 
     def run(self):
         """This method is the hearth of every experiment and must be
