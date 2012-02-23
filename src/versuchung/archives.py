@@ -171,6 +171,10 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         """Return git ref which was checked out"""
         return self.__ref
 
+    def checkout_url(self):
+        """Return git url which was checked out"""
+        return self.__clone_url
+
     def inp_metadata(self):
         return {self.name + "-clone-url": str(self.__clone_url),
                 self.name + "-ref": self.__ref,
