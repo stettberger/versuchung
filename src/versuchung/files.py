@@ -82,6 +82,8 @@ class File(FilesystemObject):
 
     def flush(self):
         """Flush the cached content of the file to disk"""
+        if not self.__value:
+            return
         with open(self.path, "w+") as fd:
             v = self.before_write(self.value)
             if v is None:

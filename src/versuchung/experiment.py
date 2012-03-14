@@ -80,6 +80,10 @@ class Experiment(Type, InputParameter):
     (str). When the experiment is used as input parameter it is the
     key-value in the :attr:`~.inputs` dictionary."""
 
+    suspend_on_error = False
+    """Suspend the experiment process, if the run() method fails. The
+    path of the tmp-directory is printed after suspension"""
+
     def __init__(self, default_experiment_instance = None):
         """The constructor of an experiment just filles in the
         necessary attributes but has *no* sideeffects on the outside
@@ -223,6 +227,9 @@ class Experiment(Type, InputParameter):
             self.run()
         except:
             # Clean up the tmp directory
+            if self.suspend_on_error:
+                print "tmp-dir: %s" % self.tmp_directory.path
+                self.suspend_python()
             logging.error("Removing tmp directory")
             shutil.rmtree(self.tmp_directory.path)
             raise
@@ -251,6 +258,11 @@ class Experiment(Type, InputParameter):
     will be called.
 
     >>> experiment(sys.argv)"""
+
+    def suspend_python(self):
+        """Suspend the running python process. Give the control back
+        to the terminal. This sends a SIGSTOP to the python process"""
+        os.kill(os.getpid(), signal.SIGSTOP)
 
 
     def __do_list(self, experiment, indent = 0):
