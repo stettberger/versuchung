@@ -51,6 +51,7 @@ def before(decorator_argument):
                 raise RuntimeError("Unexpected parameter count")
 
             return func(self, *args, **kwargs)
+        wrapped.__doc__ = func.__doc__
         return wrapped
     return decorator
 

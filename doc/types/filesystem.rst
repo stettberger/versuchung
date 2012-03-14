@@ -5,4 +5,4 @@ Filesystem parameters
 	:members: path,flush,copy_contents,value,write
 
 .. autoclass:: versuchung.files.Directory
-	:members: path,value,new_file
+	:members: path,value,new_file, mirror_directory
