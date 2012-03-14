@@ -208,6 +208,8 @@ class Experiment(Type, InputParameter):
         for (name, outp) in self.outputs.items():
             outp.outp_tear_down_output()
 
+        self.__teardown_output_directory()
+
         shutil.rmtree(self.tmp_directory.path)
 
         # Create a Symlink to the newsest result set
@@ -266,7 +268,7 @@ class Experiment(Type, InputParameter):
 
         # Here the hash is already calculated, so we can change the
         # metadata nonconsitent
-        metadata["date"] = str(datetime.datetime.now())
+        metadata["date-start"] = str(datetime.datetime.now())
         metadata["experiment-name"] = self.title
         metadata["experiment-version"] = self.version
 
@@ -277,6 +279,13 @@ class Experiment(Type, InputParameter):
         self.__metadata = metadata
 
         return self.__experiment_instance
+
+    def __teardown_output_directory(self):
+        self.__metadata["date-end"] = str(datetime.datetime.now())
+
+        fd = open(os.path.join(self.path, "metadata"), "w+")
+        fd.write(pprint.pformat(self.__metadata) + "\n")
+        fd.close()
 
     ### Input Type
     def inp_setup_cmdline_parser(self, parser):
