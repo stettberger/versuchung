@@ -15,6 +15,8 @@ import shutil
 import copy
 import tempfile
 
+LambdaType = type(lambda x:x)
+
 class ExperimentError(Exception):
     pass
 
@@ -103,6 +105,8 @@ class Experiment(Type, InputParameter):
         self.base_directory = os.path.abspath(os.curdir)
 
         for (name, inp) in self.inputs.items():
+            if type(inp) == LambdaType:
+                continue
             if not isinstance(inp, InputParameter):
                 print "%s cannot be used as an input parameter" % name
                 sys.exit(-1)
@@ -129,6 +133,8 @@ class Experiment(Type, InputParameter):
                                  help="increase verbosity (specify multiple times for more)")
 
         for (name, inp) in self.inputs.items():
+            if type(inp) == LambdaType:
+                continue
             inp.inp_setup_cmdline_parser(self.__parser)
 
     def __setup_tmp_directory(self):
@@ -188,9 +194,24 @@ class Experiment(Type, InputParameter):
 
         for (name, inp) in self.inputs.items():
             inp.base_directory = self.base_directory
+            if type(inp) == LambdaType:
+                continue
             ret = inp.inp_extract_cmdline_parser(opts, args)
             if ret:
                 (opts, args) = ret
+
+
+        # After all input parameters are parsed. Execute the
+        # calculated input parameters
+        for (name, inp) in self.inputs.items():
+            if type(inp) != LambdaType:
+                continue
+            inp = inp(self)
+            inp.name = name
+            if hasattr(inp, "tmp_directory"):
+                inp.tmp_directory = self.tmp_directory
+            inp.base_directory = self.base_directory
+            self.inputs[name] = inp
 
         self.__experiment_instance = self.__setup_output_directory()
 
