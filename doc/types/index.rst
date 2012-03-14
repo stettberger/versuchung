@@ -17,4 +17,5 @@ results. They are used in
    csv
    tex
    archives
+   search
    tools
