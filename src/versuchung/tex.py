@@ -116,6 +116,11 @@ class PgfKeyDict(File, dict):
 
         return "\n".join(v) + "\n"
 
+    def flush(self):
+        self.value = self.before_write(self)
+        File.flush(self)
+
+
 if __name__ == '__main__':
     import sys
     print PgfKeyDict(sys.argv[1])
