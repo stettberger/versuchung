@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import logging
 
 def search_experiment_results(experiment_type, directory, selector = None):
     """In large experiment setups it is hard to keep track of all
@@ -38,6 +39,25 @@ def search_experiment_results(experiment_type, directory, selector = None):
                     experiment_map[experiment_name] = experiment_type(path)
 
     return experiment_map.values()
+
+def search_experiment(experiment_type, directory, selector = None):
+    """Like :func:`search_experiment_results`, but returns only one
+    experiment result set. And fails if it is ambigious"""
+
+    exps = search_experiment_results(experiment_type, directory, selector)
+    if len(exps) != 1:
+        logging.error("search_experiment didn't exactly one instance (%d found)", len(exps))
+        assert False
+    return exps[0]
+
+def search_path_go_up_till(path, till):
+    """Go up in the given path (which is of type string), until the
+    directory is called till"""
+
+    while path and path != "" and os.path.basename(path) != till:
+        path = os.path.dirname(path)
+    assert path
+    return path
 
 
 def search_selector_metadata(metadata_dict):
