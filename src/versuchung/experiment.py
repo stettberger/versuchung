@@ -209,7 +209,7 @@ class Experiment(Type, InputParameter):
         if opts.do_symlink:
             link = os.path.join(self.base_directory, self.title)
             if os.path.islink(link):
-                os.unlink(path)
+                os.unlink(link)
             if not os.path.exists(link):
                 os.symlink(self.__experiment_instance, link)
             else:
