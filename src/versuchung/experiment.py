@@ -198,7 +198,12 @@ class Experiment(Type, InputParameter):
             outp.base_directory = self.path
             outp.outp_setup_output()
 
-        self.run()
+        try:
+            self.run()
+        except:
+            # Clean up the tmp directory
+            shutil.rmtree(self.tmp_directory.path)
+            raise
 
         for (name, outp) in self.outputs.items():
             outp.outp_tear_down_output()
