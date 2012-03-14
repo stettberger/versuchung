@@ -68,3 +68,13 @@ def assert_metadata_common(metadata_field, experiments):
         field = experiments[0].metadata[metadata_field]
         for e in experiments:
             assert field == e.metadata[metadata_field]
+
+if __name__ == '__main__':
+    import sys
+    from versuchung.experiment import Experiment
+    if len(sys.argv) != 4:
+        print "%s <experiment-type> <field> <data>" % sys.argv[0]
+        sys.exit(-1)
+    Experiment.__name__ = sys.argv[1]
+    for exp in search_experiment_results(Experiment, ".", {sys.argv[2]: sys.argv[3]}):
+        print exp.path
