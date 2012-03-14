@@ -108,12 +108,16 @@ class File(FilesystemObject):
         return value
 
 class Directory_op_with:
+    def __init__(self):
+        self.__olddir = []
     def __enter__(self):
-        self.olddir = os.path.abspath(os.curdir)
+        self.__olddir.append(os.path.abspath(os.curdir))
         os.chdir(self.path)
         return self.path
     def __exit__(self, *excinfo):
-        os.chdir(self.olddir)
+        path = self.__olddir[-1]
+        del self.__olddir[-1]
+        os.chdir(path)
 
 
 class Directory(FilesystemObject, Directory_op_with):
@@ -130,6 +134,7 @@ class Directory(FilesystemObject, Directory_op_with):
 
     def __init__(self, default_filename=""):
         FilesystemObject.__init__(self, default_filename)
+        Directory_op_with.__init__(self)
         self.__value = None
         self.__new_files = []
 

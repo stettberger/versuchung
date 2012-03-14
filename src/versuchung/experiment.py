@@ -202,6 +202,7 @@ class Experiment(Type, InputParameter):
             self.run()
         except:
             # Clean up the tmp directory
+            logging.error("Removing tmp directory")
             shutil.rmtree(self.tmp_directory.path)
             raise
 

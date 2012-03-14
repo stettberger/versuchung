@@ -34,6 +34,9 @@ class TarArchive(Type, InputParameter, Directory_op_with):
         """The default_filename is either a string to a file. Or a
         object with a path attribute (e.g. a :class:`~versuchung.files.File`)"""
         Type.__init__(self)
+        InputParameter.__init__(self)
+        Directory_op_with.__init__(self)
+
         self.__filename = filename
         self.__value = None
 
@@ -130,6 +133,8 @@ class GitArchive(InputParameter, Type, Directory_op_with):
            The git archive will be cloned to self.name (which is the
            key in the input parameters dict)"""
         Type.__init__(self)
+        InputParameter.__init__(self)
+        Directory_op_with.__init__(self)
 
         self.__clone_url = clone_url
         self.__ref = ref

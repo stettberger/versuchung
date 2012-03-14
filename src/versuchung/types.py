@@ -39,6 +39,8 @@ class Type(object):
                 setattr(other, field, getattr(self, field))
 
 class InputParameter:
+    def __init__(self):
+        pass
     def inp_setup_cmdline_parser(self, parser):
         raise NotImplemented
     def inp_extract_cmdline_parser(self, opts, args):
@@ -68,6 +70,8 @@ class InputParameter:
 
 
 class OutputParameter:
+    def __init__(self):
+        pass
     def outp_setup_output(self):
         raise NotImplemented
     def outp_tear_down_output(self):
