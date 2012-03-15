@@ -84,6 +84,8 @@ class Experiment(Type, InputParameter):
     """Suspend the experiment process, if the run() method fails. The
     path of the tmp-directory is printed after suspension"""
 
+    tmp_directory = None
+
     def __init__(self, default_experiment_instance = None):
         """The constructor of an experiment just filles in the
         necessary attributes but has *no* sideeffects on the outside
@@ -251,7 +253,11 @@ class Experiment(Type, InputParameter):
                 self.__do_list(Experiment(dirname), indent + 3)
 
     def before_experiment_run(self, parameter_type):
-        if parameter_type != "output":
+        if parameter_type == "input":
+            for (name, outp) in self.outputs.items():
+                self.propagate_meta_data(name, outp)
+                outp.base_directory = self.path
+                outp.before_experiment_run("input")
             return
 
         for (name, inp) in self.inputs.items():

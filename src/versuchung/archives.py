@@ -242,12 +242,32 @@ class GzipFile(File):
     """This parameter needs an tmp_directory to clone the archive"""
     tmp_directory = None
 
+    @property
+    def path(self):
+        path = File.path.fget(self)
+        if self.__parameter_type == "input" and not os.path.exists(path):
+            shell("gunzip < %s > %s", self.__original_filename,
+                  path)
+        return path
+
+    @property
+    def value(self):
+        path = File.path.fget(self)
+        if self.__parameter_type == "input" and not os.path.exists(path):
+            shell("gunzip < %s > %s", self.__original_filename,
+                  path)
+        return File.value.fget(self)
+
+    @value.setter
+    def value(self, value):
+        File.value.fset(self, value)
+
     def before_experiment_run(self, parameter_type):
         assert parameter_type in ["input", "output"]
+        self.__parameter_type = parameter_type
         if parameter_type == "input":
+            self.__original_filename = self.path
             filename = self.name + "_" + os.path.basename(self.path.rstrip(".gz"))
-            shell("gunzip < %s > %s", self.path,
-                  os.path.join(self.tmp_directory.path, filename))
             self.set_path(self.tmp_directory.path, filename)
 
         File.before_experiment_run(self, parameter_type)
