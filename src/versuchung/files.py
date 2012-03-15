@@ -27,6 +27,10 @@ class FilesystemObject(InputParameter, OutputParameter, Type):
             return os.path.abspath(self.__object_name)
         return os.path.join(self.base_directory, self.__object_name)
 
+    def set_path(self, base_directory, object_name):
+        self.base_directory = base_directory
+        self.__object_name = object_name
+
 
 class File(FilesystemObject):
     """Can be used as: **input parameter** and **output parameter**
@@ -72,13 +76,17 @@ class File(FilesystemObject):
         else:
             self.value = content
 
-    def outp_setup_output(self):
-        # Create the file
-        with open(self.path, "w+") as fd:
-            fd.write("")
+    def before_experiment_run(self, parameter_type):
+        assert parameter_type in ["input", "output"]
+        if parameter_type == "output":
+            # Create the file
+            with open(self.path, "w+") as fd:
+                fd.write("")
 
-    def outp_tear_down_output(self):
-        self.flush()
+    def after_experiment_run(self, parameter_type):
+        assert parameter_type in ["input", "output"]
+        if parameter_type == "output":
+            self.flush()
 
     def flush(self):
         """Flush the cached content of the file to disk"""
@@ -154,13 +162,16 @@ class Directory(FilesystemObject, Directory_op_with):
             self.__value = os.listdir(self.path)
         return self.__value
 
-    @__ensure_dir_exists
-    def outp_setup_output(self):
-        pass
+    def before_experiment_run(self, parameter_type):
+        assert parameter_type in ["input", "output"]
+        if parameter_type == "output":
+            self.__ensure_dir_exists()
 
-    def outp_tear_down_output(self):
-        for f in self.__new_files:
-            f.outp_tear_down_output()
+    def after_experiment_run(self, parameter_type):
+        assert parameter_type in ["input", "output"]
+        if parameter_type == "output":
+            for f in self.__new_files:
+                f.after_experiment_run("output")
 
     @__ensure_dir_exists
     def new_file(self, name):

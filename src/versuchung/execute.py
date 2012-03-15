@@ -242,18 +242,19 @@ class MachineMonitor(CSV_File):
         CSV_File.inp_parser_extract(self, opts, None)
         self.event_file = CSV_File(self.path + ".events")
 
-    def outp_setup_output(self):
-        CSV_File.outp_setup_output(self)
-        self.event_file = CSV_File(self.path + ".events")
-        self.event_file.outp_setup_output()
-        self.thread = thread.start_new_thread(self.monitor_thread, tuple())
+    def before_experiment_run(self, parameter_type):
+        if parameter_type == "output":
+            CSV_File.before_experiment_run(self, "output")
+            self.event_file = CSV_File(self.path + ".events")
+            self.event_file.before_experiment_run("output")
+            self.thread = thread.start_new_thread(self.monitor_thread, tuple())
 
-    def outp_tear_down_output(self):
-        self.__running = False
-        time.sleep(self.tick_interval/1000.0)
-        CSV_File.outp_tear_down_output(self)
-        self.event_file.outp_tear_down_output()
-
+    def after_experiment_run(self, parameter_type):
+        if parameter_type == "output":
+            self.__running = False
+            time.sleep(self.tick_interval/1000.0)
+            CSV_File.after_experiment_run(self, "output")
+            self.event_file.after_experiment_run("output")
 
 
     sample_keys = ["time", "cpu_percentage",

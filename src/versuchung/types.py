@@ -38,6 +38,13 @@ class Type(object):
                 # Copy the value
                 setattr(other, field, getattr(self, field))
 
+    def before_experiment_run(self, parameter_type):
+        pass
+
+    def after_experiment_run(self, parameter_type):
+        pass
+
+
 class InputParameter:
     def __init__(self):
         pass
@@ -72,10 +79,6 @@ class InputParameter:
 class OutputParameter:
     def __init__(self):
         pass
-    def outp_setup_output(self):
-        raise NotImplemented
-    def outp_tear_down_output(self):
-        raise NotImplemented
 
 
 class String(InputParameter, Type):

@@ -116,7 +116,6 @@ class Experiment(Type, InputParameter):
                 sys.exit(-1)
             inp.name = name
 
-
         for (name, outp) in self.outputs.items():
             if not isinstance(outp, OutputParameter):
                 print "%s cannot be used as an output parameter" % name
@@ -182,8 +181,10 @@ class Experiment(Type, InputParameter):
         self.base_directory = os.path.abspath(os.curdir)
         setup_logging(opts.verbose)
 
+        self.__opts = opts
+        self.__args = args
 
-        if opts.do_list:
+        if self.__opts.do_list:
             for experiment in os.listdir(self.base_directory):
                 if experiment.startswith(self.title):
                     self.__do_list(self.__class__(experiment))
@@ -194,34 +195,15 @@ class Experiment(Type, InputParameter):
                 raise AttributeError("No argument called %s" % key)
             setattr(opts, key, kwargs[key])
 
-        self.__setup_tmp_directory()
-
+        self.before_experiment_run("output")
         for (name, inp) in self.inputs.items():
-            inp.base_directory = self.base_directory
-            if type(inp) == LambdaType:
-                continue
-            ret = inp.inp_extract_cmdline_parser(opts, args)
-            if ret:
-                (opts, args) = ret
+            inp.before_experiment_run("input")
 
-
-        # After all input parameters are parsed. Execute the
-        # calculated input parameters
-        for (name, inp) in self.inputs.items():
-            if type(inp) != LambdaType:
-                continue
-            inp = inp(self)
-            inp.name = name
-            if hasattr(inp, "tmp_directory"):
-                inp.tmp_directory = self.tmp_directory
-            inp.base_directory = self.base_directory
-            self.inputs[name] = inp
-
-        self.__experiment_instance = self.__setup_output_directory()
+        self.__calculate_metadata()
 
         for (name, outp) in self.outputs.items():
             outp.base_directory = self.path
-            outp.outp_setup_output()
+            outp.before_experiment_run("output")
 
         try:
             self.run()
@@ -234,22 +216,14 @@ class Experiment(Type, InputParameter):
             shutil.rmtree(self.tmp_directory.path)
             raise
 
+        # Experiment is over, call all the after_experiment_run methods
         for (name, outp) in self.outputs.items():
-            outp.outp_tear_down_output()
+            outp.after_experiment_run("output")
 
-        self.__teardown_output_directory()
+        for (name, inp) in self.inputs.items():
+            inp.after_experiment_run("input")
 
-        shutil.rmtree(self.tmp_directory.path)
-
-        # Create a Symlink to the newsest result set
-        if opts.do_symlink:
-            link = os.path.join(self.base_directory, self.title)
-            if os.path.islink(link):
-                os.unlink(link)
-            if not os.path.exists(link):
-                os.symlink(self.__experiment_instance, link)
-            else:
-                logging.warn("Didn't create symlink, %s exists and is no symlink", link)
+        self.after_experiment_run("output")
 
         return self.__experiment_instance
 
@@ -276,7 +250,33 @@ class Experiment(Type, InputParameter):
             if dirname in d.values():
                 self.__do_list(Experiment(dirname), indent + 3)
 
-    def __setup_output_directory(self):
+    def before_experiment_run(self, parameter_type):
+        if parameter_type != "output":
+            return
+
+        for (name, inp) in self.inputs.items():
+            inp.base_directory = self.base_directory
+            if type(inp) == LambdaType:
+                continue
+            ret = inp.inp_extract_cmdline_parser(self.__opts, self.__args)
+            if ret:
+                (self.__opts, self.__args) = ret
+
+        # After all input parameters are parsed. Execute the
+        # calculated input parameters
+        for (name, inp) in self.inputs.items():
+            if type(inp) != LambdaType:
+                continue
+            inp = inp(self)
+            inp.name = name
+            if hasattr(inp, "tmp_directory"):
+                inp.tmp_directory = self.tmp_directory
+            inp.base_directory = self.base_directory
+            self.inputs[name] = inp
+
+        self.__setup_tmp_directory()
+
+    def __calculate_metadata(self):
         metadata = {}
         for name in self.inputs:
             metadata.update( self.inputs[name].inp_metadata() )
@@ -312,14 +312,25 @@ class Experiment(Type, InputParameter):
 
         self.__metadata = metadata
 
-        return self.__experiment_instance
+    def after_experiment_run(self, parameter_type):
+        if parameter_type == "output":
+            self.__metadata["date-end"] = str(datetime.datetime.now())
+            fd = open(os.path.join(self.path, "metadata"), "w+")
+            fd.write(pprint.pformat(self.__metadata) + "\n")
+            fd.close()
 
-    def __teardown_output_directory(self):
-        self.__metadata["date-end"] = str(datetime.datetime.now())
+            shutil.rmtree(self.tmp_directory.path)
 
-        fd = open(os.path.join(self.path, "metadata"), "w+")
-        fd.write(pprint.pformat(self.__metadata) + "\n")
-        fd.close()
+            # Create a Symlink to the newsest result set
+            if self.__opts.do_symlink:
+                link = os.path.join(self.base_directory, self.title)
+                if os.path.islink(link):
+                    os.unlink(link)
+
+                if not os.path.exists(link):
+                    os.symlink(self.__experiment_instance, link)
+                else:
+                    logging.warn("Didn't create symlink, %s exists and is no symlink", link)
 
     ### Input Type
     def inp_setup_cmdline_parser(self, parser):

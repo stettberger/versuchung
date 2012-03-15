@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from versuchung.types import Type, InputParameter
-from versuchung.files import Directory, Directory_op_with
+from versuchung.files import Directory, Directory_op_with, File
 from versuchung.execute import shell
 import logging
 import os
@@ -45,7 +45,9 @@ class TarArchive(Type, InputParameter, Directory_op_with):
 
     def inp_extract_cmdline_parser(self, opts, args):
         self.__filename = self.inp_parser_extract(opts, None)
-        if "path" in dir(self.__filename):
+
+    def before_experiment_run(self, parameter_type):
+        if parameter_type == "input" and "path" in dir(self.__filename):
             self.propagate_meta_data("filename", self.__filename)
             self.__filename = self.__filename.path
 
@@ -151,8 +153,11 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         self.__clone_url = self.inp_parser_extract(opts, "clone-url")
         self.__ref = self.inp_parser_extract(opts, "ref")
 
-        if "path" in dir(self.__clone_url):
+    def before_experiment_run(self, parameter_type):
+        if parameter_type == "input" and "path" in dir(self.__clone_url):
+            assert self.base_directory
             self.propagate_meta_data("clone-url", self.__clone_url)
+            self.__clone_url.before_experiment_run("input")
             self.__clone_url = self.__clone_url.path
 
     def checkout_hash(self):
@@ -231,4 +236,26 @@ class GitArchive(InputParameter, Type, Directory_op_with):
     def path(self):
         """Return the string to the extract directory (same as .value.path)"""
         return self.value.path
+
+
+class GzipFile(File):
+    """This parameter needs an tmp_directory to clone the archive"""
+    tmp_directory = None
+
+    def before_experiment_run(self, parameter_type):
+        assert parameter_type in ["input", "output"]
+        if parameter_type == "input":
+            filename = self.name + "_" + os.path.basename(self.path.rstrip(".gz"))
+            shell("gunzip < %s > %s", self.path,
+                  os.path.join(self.tmp_directory.path, filename))
+            self.set_path(self.tmp_directory.path, filename)
+
+        File.before_experiment_run(self, parameter_type)
+
+    def after_experiment_run(self, parameter_type):
+        assert parameter_type in ["input", "output"]
+        File.after_experiment_run(self, parameter_type)
+        if parameter_type == "output":
+            shell("gzip -c %s > %s.1", self.path, self.path)
+            shell("mv %s.1 %s", self.path, self.path)
 
