@@ -162,7 +162,10 @@ class List(InputParameter, Type, list):
         if type(datatype) != type:
             datatype = type(datatype)
         self.datatype = datatype
+        self.__command_line_parsed = False
 
+        if hasattr(datatype, "tmp_directory"):
+            self.tmp_directory = None
 
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, copy.deepcopy(self.__default_value), action="append",
@@ -170,20 +173,32 @@ class List(InputParameter, Type, list):
                             self.datatype.__name__)
 
 
-
-    def inp_extract_cmdline_parser(self, opts, args):
-        import shlex
-        args = self.inp_parser_extract(opts, None)
-
-        # No argument where given, us the default_values
-        if len(args) == len(self.__default_value) and len(args) > 0\
-           and type(args[0]) == type(args[0]) == self.datatype:
+    def before_experiment_run(self, parameter_type):
+        if parameter_type == "input" and \
+                not self.__command_line_parsed:
             count = 0
             for i in self.__default_value:
                 self.propagate_meta_data(count, i)
                 count += 1
                 self.append(i)
+
+        for value in self:
+            value.before_experiment_run(parameter_type)
+
+    def after_experiment_run(self, parameter_type):
+        for value in self:
+            value.after_experiment_run(parameter_type)
+
+    def inp_extract_cmdline_parser(self, opts, args):
+        import shlex
+        args = self.inp_parser_extract(opts, None)
+
+        # No argument where given, us the default_values in before_experiment_run
+        if len(args) == len(self.__default_value) and len(args) > 0\
+           and type(args[0]) == type(args[0]) == self.datatype:
             return
+
+        self.__command_line_parsed = True
 
         if len(args) > len(self.__default_value):
             args = [x for x in args if type(x) != self.datatype]

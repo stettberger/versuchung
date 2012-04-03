@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 
 from versuchung.types import Type, InputParameter
@@ -266,7 +267,7 @@ class GzipFile(File):
         assert parameter_type in ["input", "output"]
         self.__parameter_type = parameter_type
         if parameter_type == "input":
-            self.__original_filename = self.path
+            self.__original_filename = File.path.fget(self)
             filename = self.name + "_" + os.path.basename(self.path.rstrip(".gz"))
             self.set_path(self.tmp_directory.path, filename)
 

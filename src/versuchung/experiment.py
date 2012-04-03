@@ -14,6 +14,7 @@ import hashlib
 import shutil
 import copy
 import tempfile
+import signal
 
 LambdaType = type(lambda x:x)
 
