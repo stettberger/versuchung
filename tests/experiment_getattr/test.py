@@ -26,6 +26,8 @@ if __name__ == "__main__":
     experiment = SimpleExperiment()
     dirname = experiment(sys.argv)
 
+    assert experiment.metadata["experiment-version"] == experiment.version
+
     if dirname:
         shutil.rmtree(dirname)
     print "success"

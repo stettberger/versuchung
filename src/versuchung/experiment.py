@@ -288,7 +288,7 @@ class Experiment(Type, InputParameter):
         for name in self.inputs:
             metadata.update( self.inputs[name].inp_metadata() )
         m = hashlib.md5()
-        m.update("version %d" % self.version)
+        m.update("version %s" % str(self.version))
         calc_metadata = self.filter_metadata(metadata)
         for key in sorted(calc_metadata.keys()):
             m.update(key + " " + calc_metadata[key])
@@ -311,7 +311,7 @@ class Experiment(Type, InputParameter):
         # metadata nonconsitent
         metadata["date-start"] = str(datetime.datetime.now())
         metadata["experiment-name"] = self.title
-        metadata["experiment-version"] = self.version
+        metadata["experiment-version"] = str(self.version)
 
         fd = open(os.path.join(self.path, "metadata"), "w+")
         fd.write(pprint.pformat(metadata) + "\n")
