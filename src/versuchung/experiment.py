@@ -291,7 +291,7 @@ class Experiment(Type, InputParameter):
         m.update("version %s" % str(self.version))
         calc_metadata = self.filter_metadata(metadata)
         for key in sorted(calc_metadata.keys()):
-            m.update(key + " " + calc_metadata[key])
+            m.update(key + " " + str(calc_metadata[key]))
 
         self.__experiment_instance = "%s-%s" %(self.title, m.hexdigest())
         if os.path.exists(self.path):
@@ -311,7 +311,7 @@ class Experiment(Type, InputParameter):
         # metadata nonconsitent
         metadata["date-start"] = str(datetime.datetime.now())
         metadata["experiment-name"] = self.title
-        metadata["experiment-version"] = str(self.version)
+        metadata["experiment-version"] = self.version
 
         fd = open(os.path.join(self.path, "metadata"), "w+")
         fd.write(pprint.pformat(metadata) + "\n")
