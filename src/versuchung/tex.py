@@ -120,6 +120,21 @@ class PgfKeyDict(File, dict):
         self.value = self.before_write(self)
         File.flush(self)
 
+    class PrefixForPgfKeyDict:
+        def __init__(self, prefix, d):
+            self.prefix = prefix
+            self.d = d
+        def __getitem__(self, key):
+            return self.d[self.prefix + key]
+        def __setitem__(self, key, value):
+            self.d[self.prefix + key] = value
+        def __delitem__(self, key):
+            del self.d[self.prefix + key]
+        def prefixed_with(self, prefix):
+            return self.d.PrefixForPgfKeyDict(self.prefix + prefix, self.d)
+
+    def prefixed_with(self, prefix):
+        return self.PrefixForPgfKeyDict(prefix, self)
 
 if __name__ == '__main__':
     import sys

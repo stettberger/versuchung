@@ -311,7 +311,7 @@ class Experiment(Type, InputParameter):
         # metadata nonconsitent
         metadata["date-start"] = str(datetime.datetime.now())
         metadata["experiment-name"] = self.title
-        metadata["experiment-version"] = str(self.version)
+        metadata["experiment-version"] = self.version
 
         fd = open(os.path.join(self.path, "metadata"), "w+")
         fd.write(pprint.pformat(metadata) + "\n")

@@ -243,6 +243,9 @@ class GzipFile(File):
     """This parameter needs an tmp_directory to clone the archive"""
     tmp_directory = None
 
+    def original_filename(self):
+        return self.__original_filename
+
     @property
     def path(self):
         path = File.path.fget(self)
