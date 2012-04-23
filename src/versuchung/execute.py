@@ -28,12 +28,24 @@ class CommandFailed(RuntimeError):
     def __str__(self):
         return self.repr
 
+def quote_args(args):
+    if len(args) == 1 and type(args[0]) == dict:
+        ret = {}
+        for k,v in args[0].items():
+            ret[k] = pipes.quote(v)
+        return ret
+    elif type(args) == list or type(args) == tuple:
+        args = tuple([pipes.quote(x) for x in args])
+    else:
+        assert False
+    return args
+
 
 def __shell(failok, command, *args):
     os.environ["LC_ALL"] = "C"
 
-    args = [pipes.quote(x) for x in args]
-    command = command % tuple(args)
+    args = quote_args(args)
+    command = command % args
 
     logging.debug("executing: " + command)
     p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
@@ -111,8 +123,9 @@ class AdviceShellTracker(Advice):
     def around(self, func, args, kwargs):
         assert len(args) > 0
         command = args[0]
-        args = [pipes.quote(x) for x in list(args)[1:]]
-        command = command % tuple(args)
+        import versuchung.execute
+        args = versuchung.execute.quote_args(list(args)[1:])
+        command = command % args
 
         cmd = "/usr/bin/time --verbose -o %s_time sh -c %s 2> %s_stderr"
         base = os.path.join(self.base_directory, "shell_%d" % self.count)

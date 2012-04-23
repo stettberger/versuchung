@@ -15,10 +15,12 @@ class ShellExperiment(Experiment):
             assert False
         except CommandFailed:
             pass
-        
+
         # this must not fail the experiment
         shell_failok("/bin/false")
-        
+
+        assert (['2 23'], 0) == shell("echo %(foo)s %(bar)s", {"foo": "2", "bar": "23"})
+
 if __name__ == "__main__":
     import shutil
     experiment = ShellExperiment()
