@@ -7,7 +7,8 @@ class TarArchiveText(Experiment):
     inputs = {"tar": TarArchive("test.tar.gz")}
 
     def run(self):
-        directory = self.i.tar.value
+        with self.tmp_directory as path:
+            directory = self.i.tar.value
         assert len(directory.value) == 2
         assert "ABC" in directory.value
         assert "Hallo" in directory.value

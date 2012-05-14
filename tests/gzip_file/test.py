@@ -7,10 +7,11 @@ class SimpleExperiment(Experiment):
     outputs = {"gz_out": GzipFile("content.gz") }
 
     def run(self):
-        assert self.tmp_directory.path in self.gz.path
-        assert self.gz.value.strip() == "CONTENT"
+        with self.tmp_directory as d:
+            assert self.tmp_directory.path in self.gz.path
+            assert self.gz.value.strip() == "CONTENT"
 
-        self.gz_out.value = "OUTPUT"
+            self.gz_out.value = "OUTPUT"
 
 if __name__ == "__main__":
     import shutil, sys

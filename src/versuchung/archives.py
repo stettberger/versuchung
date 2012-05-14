@@ -49,8 +49,12 @@ class TarArchive(Type, InputParameter, Directory_op_with):
 
     def before_experiment_run(self, parameter_type):
         if parameter_type == "input" and "path" in dir(self.__filename):
+            self.__filename.before_experiment_run(parameter_type)
             self.propagate_meta_data("filename", self.__filename)
             self.__filename = self.__filename.path
+
+        self.__filename = os.path.abspath(self.__filename)
+
 
     def inp_metadata(self):
         return {self.name: self.__filename}
@@ -59,7 +63,6 @@ class TarArchive(Type, InputParameter, Directory_op_with):
         if "path" in dir(self.__filename):
             self.propagate_meta_data("filename", self.__filename)
             self.__filename = self.__filename.path
-
 
         self.__filename = os.path.abspath(self.__filename)
         fn = self.__filename
