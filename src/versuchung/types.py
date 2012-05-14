@@ -58,22 +58,43 @@ class InputParameter:
             return self.name + "-" + option
         return self.name
 
+    def was_given(self):
+        """Checks if an optional parameter was given"""
+        if not hasattr(self, "optional_parameter_given"):
+            return True
+        if self.optional_parameter_given:
+            return True
+        return False
+
     def inp_parser_add(self, parser, option, default, **kwargs):
         option = self.__parser_option(option)
         kw = {
             "dest": option,
-            "help": "(default: %s)" % default,
-            "default": default
             }
+        if not hasattr(self, "optional_parameter_given"):
+            kw["default"] = default
+            kw["help"]    = "(default: %s)" % default
+
         kw.update(kwargs)
         parser.add_option('', '--%s' % option, **kw)
 
     def inp_parser_extract(self, opts, option):
-        return getattr(opts, self.__parser_option(option), None)
+        a = getattr(opts, self.__parser_option(option), None)
+        if a != None and hasattr(self, "optional_parameter_given"):
+            self.optional_parameter_given = True
+        return a
 
     def inp_metadata(self):
         return {}
 
+
+def Optional(input_parameter):
+    """Makes an input parameter optional. input_parameter.was_given()
+    checks if the parameter was given on the command line."""
+    if not isinstance(input_parameter, InputParameter):
+        raise RuntimeError("Optional() can only be used with input parameters")
+    input_parameter.optional_parameter_given = False
+    return input_parameter
 
 
 class OutputParameter:
