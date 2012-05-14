@@ -97,6 +97,9 @@ class String(InputParameter, Type):
     def inp_metadata(self):
         return {self.name: self.value}
 
+    def __str__(self):
+        return self.value
+
     @property
     def value(self):
         """The value of the string. This is either the default value
