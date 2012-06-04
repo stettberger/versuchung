@@ -165,7 +165,7 @@ class Directory(FilesystemObject, Directory_op_with):
     def before_experiment_run(self, parameter_type):
         assert parameter_type in ["input", "output"]
         if parameter_type == "output":
-            self.__ensure_dir_exists()
+            self.___ensure_dir_exists()
 
     def after_experiment_run(self, parameter_type):
         assert parameter_type in ["input", "output"]
