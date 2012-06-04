@@ -47,6 +47,8 @@ def search_experiment(experiment_type, directory, selector = None):
     exps = search_experiment_results(experiment_type, directory, selector)
     if len(exps) != 1:
         logging.error("search_experiment didn't exactly one instance (%d found)", len(exps))
+        for exp in exps:
+            logging.error(" - %s", exp.path)
         assert False
     return exps[0]
 
