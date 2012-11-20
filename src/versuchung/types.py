@@ -127,6 +127,38 @@ class String(InputParameter, Type):
         or the parameter given on the command line"""
         return self.__value
 
+class Bool(InputParameter, Type):
+    """Can be used as: **input parameter**
+
+    A boolean flag parameter (will accept "yes" and "no" on the command line."""
+
+    def __init__(self, default_value=False):
+        self.__value = default_value
+
+    def inp_setup_cmdline_parser(self, parser):
+        self.inp_parser_add(parser, None, self.__value)
+    def inp_extract_cmdline_parser(self, opts, args):
+        self.__value = self.inp_parser_extract(opts, None)
+        if self.__value == "yes":
+            self.__value = True
+        elif self.__value == "no":
+            self.__value = False
+        else:
+            raise RuntimeError("Wrong parameter for Bool() argument (%s)" % self.__value)
+
+    def inp_metadata(self):
+        return {self.name: self.value}
+
+    def __str__(self):
+        return self.value
+
+    @property
+    def value(self):
+        """The value of the string. This is either the default value
+        or the parameter given on the command line"""
+        return self.__value
+
+
 class List(InputParameter, Type, list):
     """Can be used as: **input parameter**
 
