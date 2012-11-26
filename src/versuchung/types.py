@@ -143,6 +143,8 @@ class Bool(InputParameter, Type):
             self.__value = True
         elif self.__value == "no":
             self.__value = False
+        elif type(self.__value) == bool:
+            pass
         else:
             raise RuntimeError("Wrong parameter for Bool() argument (%s)" % self.__value)
 
