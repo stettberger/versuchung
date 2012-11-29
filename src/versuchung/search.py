@@ -29,14 +29,16 @@ def search_experiment_results(experiment_type, directory, selector = None):
     if type(selector) == dict:
         selector = search_selector_metadata(selector)
 
-    for root, dirs, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory, followlinks=True):
         if "metadata" in files:
             experiment_name = os.path.basename(root)
             path = root
             if experiment_name.startswith(experiment_title):
                 dataset = experiment_type(path)
                 if selector(dataset):
-                    experiment_map[experiment_name] = experiment_type(path)
+                    exp = experiment_type(path)
+                    if exp.path not in [e.path for e in experiment_map.values()]:
+                        experiment_map[experiment_name] = exp
 
     return experiment_map.values()
 
