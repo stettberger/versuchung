@@ -74,7 +74,11 @@ class TarArchive(Type, InputParameter, Directory_op_with):
             extract_mode = "j"
 
         with self.tmp_directory as d:
-            os.mkdir(self.name)
+            try:
+                os.mkdir(self.name)
+            except OSError:
+                # ignore errors if the directory should already exist for some reason
+                pass
             with Directory(self.name) as d2:
                 dirname = os.path.abspath(".")
                 (out, ret) = shell("tar %szvf %s", extract_mode, fn)
