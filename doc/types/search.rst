@@ -2,12 +2,12 @@ Search result sets as input parameters
 **************************************
 
 In large experiment setups it is challenging to keep track of all
-result sets that are floating arround. This is especially true, if you
+result sets that are floating arround. This is especially true if you
 want to select result sets according to the metadata as input
 parameters for other experiments.
 
 Imagine you have a set of "InferenceResults", which have the key
-"arch" in their metadata. And you want to select an instance of these
+"arch" in their metadata. You want to select an instance of these
 result sets as an input parameter. This is possible when using
 functions as input parameters.
 
@@ -33,9 +33,9 @@ parsed (from the command line)::
    } 
 
 Here two inputs are computed. inference_s390 is calulated dynamically,
-but isn't dependend on any other input parameter. The result set is
-search an directory, which is an upper directory to the current one,
-and is named "data".
+but isn't dependent on any other input parameter. The result set is
+a directory, which is an upper directory to the current one, and is
+named "data".
 
 The inference parameter is similar, but dependent on the "arch" input
 parameter.
