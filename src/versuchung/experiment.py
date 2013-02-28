@@ -87,6 +87,16 @@ class Experiment(Type, InputParameter):
 
     tmp_directory = None
 
+    # Override base_directory from versuchung.types.Type
+    base_directory = None
+
+    @property
+    def static_experiment(self):
+        return self
+    @static_experiment.setter
+    def static_experiment(self, value):
+        pass
+
     def __init__(self, default_experiment_instance = None):
         """The constructor of an experiment just filles in the
         necessary attributes but has *no* sideeffects on the outside
@@ -99,10 +109,15 @@ class Experiment(Type, InputParameter):
         :type default_experiment_instance: str.
 
         """
+        Type.__init__(self)
+        InputParameter.__init__(self)
 
         self.title = self.__class__.__name__
+        self.static_experiment = self
+
         self.__experiment_instance = default_experiment_instance
         self.__metadata = None
+
         # Copy input and output objects
         self.inputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.inputs))
         self.i = self.inputs
@@ -117,14 +132,13 @@ class Experiment(Type, InputParameter):
             if not isinstance(inp, InputParameter):
                 print "%s cannot be used as an input parameter" % name
                 sys.exit(-1)
-            inp.name = name
+            self.subobjects[name] = inp
 
         for (name, outp) in self.outputs.items():
             if not isinstance(outp, OutputParameter):
                 print "%s cannot be used as an output parameter" % name
                 sys.exit(-1)
-            outp.name = name
-            outp.base_directory = self.path
+            self.subobjects[name] = outp
 
     def __setup_parser(self):
         self.__parser = OptionParser("%prog <options>")
@@ -148,14 +162,7 @@ class Experiment(Type, InputParameter):
         output directories tmp_directory slots"""
         # Create temp directory
         self.tmp_directory = Directory(tempfile.mkdtemp())
-        self.tmp_directory.base_directory = self.base_directory
-
-        for (name, inp) in self.inputs.items():
-            if hasattr(inp, 'tmp_directory'):
-                inp.tmp_directory = self.tmp_directory
-        for (name, outp) in self.outputs.items():
-            if hasattr(outp, 'tmp_directory'):
-                outp.tmp_directory = self.tmp_directory
+        self.subobjects["tmp_directory"] = self.tmp_directory
 
     def execute(self, args = [], **kwargs):
         """Calling this method will execute the experiment
@@ -178,11 +185,15 @@ class Experiment(Type, InputParameter):
         >>> experiment.execute(["--input_parameter", "foo"])
         >>> experiment.execute(input_parameter="foo")
         """
+        self.dynamic_experiment = self
+        self.subobjects.update()
+
+        # Set up the argument parsing
         self.__setup_parser()
         (opts, args) = self.__parser.parse_args(args)
         os.chdir(opts.base_dir)
-        self.base_directory = os.path.abspath(os.curdir)
         setup_logging(opts.verbose)
+
 
         self.__opts = opts
         self.__args = args
@@ -198,15 +209,8 @@ class Experiment(Type, InputParameter):
                 raise AttributeError("No argument called %s" % key)
             setattr(opts, key, kwargs[key])
 
+        # Set up the experiment
         self.before_experiment_run("output")
-        for (name, inp) in self.inputs.items():
-            inp.before_experiment_run("input")
-
-        self.__calculate_metadata()
-
-        for (name, outp) in self.outputs.items():
-            outp.base_directory = self.path
-            outp.before_experiment_run("output")
 
         try:
             self.run()
@@ -219,15 +223,14 @@ class Experiment(Type, InputParameter):
             shutil.rmtree(self.tmp_directory.path)
             raise
 
-        # Experiment is over, call all the after_experiment_run methods
-        for (name, outp) in self.outputs.items():
-            outp.after_experiment_run("output")
-
-        for (name, inp) in self.inputs.items():
-            inp.after_experiment_run("input")
-
+        # Tear down the experiment
         self.after_experiment_run("output")
 
+        return self.__experiment_instance
+
+    @property
+    def experiment_identifier(self):
+        """:return: string -- directory name of the produced experiment results"""
         return self.__experiment_instance
 
     __call__ = execute
@@ -256,13 +259,10 @@ class Experiment(Type, InputParameter):
     def before_experiment_run(self, parameter_type):
         if parameter_type == "input":
             for (name, outp) in self.outputs.items():
-                self.propagate_meta_data(name, outp)
-                outp.base_directory = self.path
                 outp.before_experiment_run("input")
             return
 
         for (name, inp) in self.inputs.items():
-            inp.base_directory = self.base_directory
             if type(inp) == LambdaType:
                 continue
             ret = inp.inp_extract_cmdline_parser(self.__opts, self.__args)
@@ -276,12 +276,18 @@ class Experiment(Type, InputParameter):
                 continue
             inp = inp(self)
             inp.name = name
-            if hasattr(inp, "tmp_directory"):
-                inp.tmp_directory = self.tmp_directory
-            inp.base_directory = self.base_directory
             self.inputs[name] = inp
 
         self.__setup_tmp_directory()
+
+        for obj in self.inputs.values():
+            obj.before_experiment_run("input")
+
+        self.__calculate_metadata()
+
+        for obj in self.outputs.values():
+            obj.before_experiment_run("output")
+
 
     def __calculate_metadata(self):
         metadata = {}
@@ -294,16 +300,19 @@ class Experiment(Type, InputParameter):
             m.update(key + " " + str(calc_metadata[key]))
 
         self.__experiment_instance = "%s-%s" %(self.title, m.hexdigest())
-        if os.path.exists(self.path):
+        self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
+        self.base_directory = os.path.realpath(self.base_directory)
+
+        if os.path.exists(self.base_directory):
             logging.info("Removing all files from existing output directory")
-            for f in glob.glob(os.path.join(self.path, '*')):
+            for f in glob.glob(os.path.join(self.base_directory, '*')):
                 if os.path.isdir(f):
                     shutil.rmtree(f)
                 else:
                     os.unlink(f)
 
         try:
-            os.mkdir(self.path)
+            os.mkdir(self.base_directory)
         except OSError:
             pass
 
@@ -313,14 +322,21 @@ class Experiment(Type, InputParameter):
         metadata["experiment-name"] = self.title
         metadata["experiment-version"] = self.version
 
-        fd = open(os.path.join(self.path, "metadata"), "w+")
+        fd = open(os.path.join(self.base_directory, "metadata"), "w+")
         fd.write(pprint.pformat(metadata) + "\n")
         fd.close()
 
         self.__metadata = metadata
 
     def after_experiment_run(self, parameter_type):
+
         if parameter_type == "output":
+            for (name, outp) in self.outputs.items():
+                outp.after_experiment_run("output")
+
+            for (name, inp) in self.inputs.items():
+                inp.after_experiment_run("input")
+
             self.__metadata["date-end"] = str(datetime.datetime.now())
             fd = open(os.path.join(self.path, "metadata"), "w+")
             fd.write(pprint.pformat(self.__metadata) + "\n")
@@ -339,6 +355,10 @@ class Experiment(Type, InputParameter):
                 else:
                     logging.warn("Didn't create symlink, %s exists and is no symlink", link)
 
+        else:
+            for (name, outp) in self.outputs.items():
+                outp.after_experiment_run("input")
+
     ### Input Type
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, self.__experiment_instance)
@@ -348,8 +368,14 @@ class Experiment(Type, InputParameter):
         if not self.__experiment_instance:
             print "Missing argument for %s" % self.title
             raise ExperimentError
+
+        self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
+        self.base_directory = os.path.realpath(self.base_directory)
+
         for (name, outp) in self.outputs.items():
-            outp.base_directory = os.path.join(self.base_directory, self.__experiment_instance)
+            del self.subobjects[name]
+            self.subobjects[name] = outp
+
     def inp_metadata(self):
         return {self.name: self.__experiment_instance}
 
@@ -359,7 +385,7 @@ class Experiment(Type, InputParameter):
         experiments, which are running at the moment, and for already
         run experiments by reading the /metadata file."""
         if not self.__metadata:
-            md_path = os.path.join(self.path, "metadata")
+            md_path = os.path.join(self.base_directory, "metadata")
             with open(md_path) as fd:
                 self.__metadata = eval(fd.read())
         return self.__metadata
@@ -367,11 +393,7 @@ class Experiment(Type, InputParameter):
     @property
     def path(self):
         """Return the path to output directory"""
-        if self.__experiment_instance:
-            path = os.path.join(self.base_directory, self.__experiment_instance)
-            path = os.path.realpath(path)
-            return path
-        return None
+        return self.base_directory
 
     def run(self):
         """This method is the hearth of every experiment and must be

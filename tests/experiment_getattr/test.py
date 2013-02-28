@@ -11,17 +11,17 @@ class SimpleExperiment(Experiment):
               "xxx": File("/dev/null"),
               "empty": String(None)}
     outputs = {'xyz': File("asd"),
-               "xxx": File("asd")}
+               "zzz": File("asd")}
 
     def run(self):
         assert self.abc == self.inputs.abc
         assert self.xyz == self.outputs.xyz
         exception = False
         try:
-            print self.xxx
+            self.xxx != None
         except AttributeError:
             exception = True
-        assert exception
+        assert exception == False
 
         assert self.empty.value is None
 

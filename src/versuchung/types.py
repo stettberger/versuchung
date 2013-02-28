@@ -8,6 +8,52 @@ import copy
 
 
 class Type(object):
+    static_experiment = None
+    """A reference to the static enclosing experiment: where the type was defined in"""
+
+    dynamic_experiment = None
+    """A reference to the currently running experiment"""
+
+    subobjects = None
+    """A Type.Subobjects instance that collects all Types that are
+       used by this type. Subordinate types"""
+
+    parameter_type = None
+
+    class SubObjects(dict):
+        def __init__(self, type_object):
+            dict.__init__(self)
+            self.__parent__ = type_object
+        def __setitem__(self, key, value):
+            assert not key in self, "Duplicated object name: %s" % key
+            dict.__setitem__(self, key, value)
+            self.update()
+        def update(self):
+            for name, obj in self.items():
+                if self.__parent__.name != None:
+                    obj.name = "%s-%s" % (self.__parent__.name, name)
+                else:
+                    obj.name = name
+                obj.static_experiment  = self.__parent__.static_experiment
+                obj.dynamic_experiment = self.__parent__.dynamic_experiment
+
+    def __init__(self):
+        # We gather a list of objects that are used by us.
+        self.subobjects = self.SubObjects(self)
+
+    def before_experiment_run(self, parameter_type):
+        self.parameter_type = parameter_type
+        self.subobjects.update()
+        for subobj in self.subobjects.values():
+            subobj.before_experiment_run(parameter_type)
+
+    def after_experiment_run(self, parameter_type):
+        for subobj in self.subobjects.values():
+            subobj.after_experiment_run(parameter_type)
+
+    ################################################################
+    # Accessors
+    ################################################################
     """This is the base type for all input and output parameters"""
     @property
     def name(self):
@@ -23,26 +69,21 @@ class Type(object):
 
     @property
     def base_directory(self):
-        return self.__base_directory
-    @base_directory.setter
-    def base_directory(self, value):
-        self.__base_directory = value
+        """The base directory of a type is always the base directory
+        of the (statically) enclosing experiment instance. The
+        Directory has the form <ExperimentName>-<HASH>"""
+        if not self.static_experiment:
+            return None
+        return self.static_experiment.base_directory
 
-    def propagate_meta_data(self, subname, other, fields = ["base_directory", "tmp_directory"]):
-        if subname != None:
-            other.name = "%s-%s" %(self.name, subname)
-        else:
-            other.name = self.name
-        for field in fields:
-            if field in dir(self) and field in dir(other):
-                # Copy the value
-                setattr(other, field, getattr(self, field))
+    @property
+    def tmp_directory(self):
+        """A temporary directory, which can be used during experiment
+        execution. The tmp_directory is deduced through the dynamic
+        experiment reference"""
+        assert self.dynamic_experiment, "Type is not used part of a running experiment"
+        return self.dynamic_experiment.tmp_directory
 
-    def before_experiment_run(self, parameter_type):
-        pass
-
-    def after_experiment_run(self, parameter_type):
-        pass
 
 
 class InputParameter:
@@ -108,6 +149,8 @@ class String(InputParameter, Type):
     A String is the most simple input parameter."""
 
     def __init__(self, default_value=""):
+        InputParameter.__init__(self)
+        Type.__init__(self)
         self.__value = default_value
 
     def inp_setup_cmdline_parser(self, parser):
@@ -133,6 +176,8 @@ class Bool(InputParameter, Type):
     A boolean flag parameter (will accept "yes" and "no" on the command line."""
 
     def __init__(self, default_value=False):
+        InputParameter.__init__(self)
+        Type.__init__(self)
         self.__value = default_value
 
     def inp_setup_cmdline_parser(self, parser):
@@ -216,14 +261,14 @@ class List(InputParameter, Type, list):
     """
 
     def __init__(self, datatype, default_value=[]):
+        InputParameter.__init__(self)
+        Type.__init__(self)
+        list.__init__(self)
         self.__default_value = default_value
         if type(datatype) != type:
             datatype = type(datatype)
         self.datatype = datatype
         self.__command_line_parsed = False
-
-        if hasattr(datatype, "tmp_directory"):
-            self.tmp_directory = None
 
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, copy.deepcopy(self.__default_value), action="append",
@@ -236,16 +281,10 @@ class List(InputParameter, Type, list):
                 not self.__command_line_parsed:
             count = 0
             for i in self.__default_value:
-                self.propagate_meta_data(count, i)
-                count += 1
+                self.subobjects["%d" % count] = i
                 self.append(i)
 
-        for value in self:
-            value.before_experiment_run(parameter_type)
-
-    def after_experiment_run(self, parameter_type):
-        for value in self:
-            value.after_experiment_run(parameter_type)
+        Type.before_experiment_run(self,parameter_type)
 
     def inp_extract_cmdline_parser(self, opts, args):
         import shlex
@@ -265,7 +304,7 @@ class List(InputParameter, Type, list):
         for arg in args:
             # Create Subtype and initialize its parser
             subtype = self.datatype()
-            self.propagate_meta_data(count, subtype)
+            self.subobjects["%d" % count] = subtype
             count += 1
             subtype_parser = OptionParser()
             subtype.inp_setup_cmdline_parser(subtype_parser)

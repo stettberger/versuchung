@@ -9,7 +9,12 @@ import os
 
 class FilesystemObject(InputParameter, OutputParameter, Type):
     def __init__(self, default_name=""):
+        InputParameter.__init__(self)
+        OutputParameter.__init__(self)
+        Type.__init__(self)
         self.__object_name = default_name
+        self.__enclosing_directory = os.path.abspath(os.curdir)
+        self.__force_enclosing_directory = False
 
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, self.__object_name)
@@ -23,14 +28,24 @@ class FilesystemObject(InputParameter, OutputParameter, Type):
     @property
     def path(self):
         """:return: string -- path to the file/directory"""
-        if not hasattr(self, "base_directory"):
-            return os.path.abspath(self.__object_name)
-        return os.path.join(self.base_directory, self.__object_name)
+        if not self.__force_enclosing_directory:
+            if self.parameter_type == "input":
+                if self.static_experiment == self.dynamic_experiment:
+                    self.__enclosing_directory = os.path.abspath(os.curdir)
+                else:
+                    self.__enclosing_directory = self.static_experiment.base_directory
+            elif self.parameter_type == "output":
+                assert self.static_experiment == self.dynamic_experiment
+                self.__enclosing_directory = self.dynamic_experiment.base_directory
+            else:
+                self.__enclosing_directory = os.path.abspath(os.curdir)
+        return os.path.join(self.__enclosing_directory, self.__object_name)
 
     def set_path(self, base_directory, object_name):
-        self.base_directory = base_directory
-        self.__object_name = object_name
-
+        assert base_directory[0] == "/"
+        self.__force_enclosing_directory = True
+        self.__enclosing_directory = base_directory
+        self.__object_name         = object_name
 
 class File(FilesystemObject):
     """Can be used as: **input parameter** and **output parameter**
@@ -60,7 +75,7 @@ class File(FilesystemObject):
                     self.__value = self.after_read(fd.read())
             except IOError:
                 # File couldn't be read
-                self.__value = ""
+                self.__value = self.after_read("")
         return self.__value
 
     @value.setter
@@ -76,14 +91,8 @@ class File(FilesystemObject):
         else:
             self.value = content
 
-    def before_experiment_run(self, parameter_type):
-        assert parameter_type in ["input", "output"]
-        if parameter_type == "output":
-            # Create the file
-            with open(self.path, "w+") as fd:
-                fd.write("")
-
     def after_experiment_run(self, parameter_type):
+        FilesystemObject.after_experiment_run(self, parameter_type)
         assert parameter_type in ["input", "output"]
         if parameter_type == "output":
             self.flush()
@@ -163,15 +172,9 @@ class Directory(FilesystemObject, Directory_op_with):
         return self.__value
 
     def before_experiment_run(self, parameter_type):
-        assert parameter_type in ["input", "output"]
+        FilesystemObject.before_experiment_run(self, parameter_type)
         if parameter_type == "output":
             self.___ensure_dir_exists()
-
-    def after_experiment_run(self, parameter_type):
-        assert parameter_type in ["input", "output"]
-        if parameter_type == "output":
-            for f in self.__new_files:
-                f.after_experiment_run("output")
 
     @__ensure_dir_exists
     def new_file(self, name):
@@ -179,8 +182,8 @@ class Directory(FilesystemObject, Directory_op_with):
         directory. It will be flushed automatically if the experiment
         is over."""
         f = File(name)
-        f.base_directory = self.path
-        self.__new_files.append(f)
+        f.set_path(self.path, name)
+        self.subobjects[name] = f
         return f
 
     @__ensure_dir_exists

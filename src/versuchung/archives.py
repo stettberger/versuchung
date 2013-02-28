@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 
 from versuchung.types import Type, InputParameter
@@ -27,10 +26,6 @@ class TarArchive(Type, InputParameter, Directory_op_with):
             # Do something in the extracted copy
             print path
     """
-
-    # This parameter needs an tmp_directory to extract the archive
-    tmp_directory = None
-
     def __init__(self, filename = None):
         """The default_filename is either a string to a file. Or a
         object with a path attribute (e.g. a :class:`~versuchung.files.File`)"""
@@ -49,19 +44,20 @@ class TarArchive(Type, InputParameter, Directory_op_with):
 
     def before_experiment_run(self, parameter_type):
         if parameter_type == "input" and "path" in dir(self.__filename):
-            self.__filename.before_experiment_run(parameter_type)
-            self.propagate_meta_data("filename", self.__filename)
+            self.subobjects["filename"] = self.__filename
+            Type.before_experiment_run(self, parameter_type)
             self.__filename = self.__filename.path
+        else:
+            Type.before_experiment_run(self, parameter_type)
 
         self.__filename = os.path.abspath(self.__filename)
-
 
     def inp_metadata(self):
         return {self.name: self.__filename}
 
     def __setup_value(self):
         if "path" in dir(self.__filename):
-            self.propagate_meta_data("filename", self.__filename)
+            self.subobjects["filename"] = self.__filename
             self.__filename = self.__filename.path
 
         self.__filename = os.path.abspath(self.__filename)
@@ -131,9 +127,6 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             print path
     """
 
-    """This parameter needs an tmp_directory to clone the archive"""
-    tmp_directory = None
-
     def __init__(self, clone_url = None, ref = "refs/heads/master", shallow = False):
         """clone_url: where to the git archive from
               This might either be a string or a object with a path attribute
@@ -163,10 +156,11 @@ class GitArchive(InputParameter, Type, Directory_op_with):
 
     def before_experiment_run(self, parameter_type):
         if parameter_type == "input" and "path" in dir(self.__clone_url):
-            assert self.base_directory
-            self.propagate_meta_data("clone-url", self.__clone_url)
-            self.__clone_url.before_experiment_run("input")
+            self.subobjects["clone-url"] = self.__clone_url
+            Type.before_experiment_run(self, parameter_type)
             self.__clone_url = self.__clone_url.path
+        else:
+            Type.before_experiment_run(self, parameter_type)
 
     def checkout_hash(self):
         """Return the hash of the HEAD commit hash as string"""
@@ -200,7 +194,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
 
     def __setup_value(self):
         if "path" in dir(self.__clone_url):
-            self.propagate_meta_data("clone-url", self.__clone_url)
+            self.subobjects["clone-url"] = self.__clone_url
             self.__clone_url = self.__clone_url.path
 
         logging.info("copying git archive %s", self.__clone_url)
@@ -247,16 +241,13 @@ class GitArchive(InputParameter, Type, Directory_op_with):
 
 
 class GzipFile(File):
-    """This parameter needs an tmp_directory to clone the archive"""
-    tmp_directory = None
-
     def original_filename(self):
         return self.__original_filename
 
     @property
     def path(self):
         path = File.path.fget(self)
-        if self.__parameter_type == "input" and not os.path.exists(path):
+        if self.parameter_type == "input" and not os.path.exists(path):
             shell("gunzip < %s > %s", self.__original_filename,
                   path)
         return path
@@ -264,7 +255,7 @@ class GzipFile(File):
     @property
     def value(self):
         path = File.path.fget(self)
-        if self.__parameter_type == "input" and not os.path.exists(path):
+        if self.parameter_type == "input" and not os.path.exists(path):
             shell("gunzip < %s > %s", self.__original_filename,
                   path)
         return File.value.fget(self)
@@ -274,17 +265,15 @@ class GzipFile(File):
         File.value.fset(self, value)
 
     def before_experiment_run(self, parameter_type):
-        assert parameter_type in ["input", "output"]
-        self.__parameter_type = parameter_type
         if parameter_type == "input":
             self.__original_filename = File.path.fget(self)
+            self.subobjects["filename"] = File(self.__original_filename)
             filename = self.name + "_" + os.path.basename(self.path.rstrip(".gz"))
             self.set_path(self.tmp_directory.path, filename)
 
         File.before_experiment_run(self, parameter_type)
 
     def after_experiment_run(self, parameter_type):
-        assert parameter_type in ["input", "output"]
         File.after_experiment_run(self, parameter_type)
         if parameter_type == "output":
             shell("gzip -c %s > %s.1", self.path, self.path)

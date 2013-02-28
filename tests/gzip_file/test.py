@@ -19,12 +19,7 @@ if __name__ == "__main__":
     experiment = SimpleExperiment()
     dirname = experiment(sys.argv)
 
-    g = GzipFile(dirname + "/content.gz")
-    g.name = ""
-    g.tmp_directory = Directory(dirname)
-    g.before_experiment_run("input")
-
-    assert g.value == "OUTPUT"
+    assert len(open(experiment.gz_out.path).read()) > 0
 
     if dirname:
         shutil.rmtree(dirname)
