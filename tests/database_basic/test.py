@@ -6,10 +6,14 @@ import os
 
 class SimpleExperiment(Experiment):
     outputs = {'table1': TableDict(),
+               'table3': TableDict(),
                "table2": Table([("foo", "integer")], db = Database("foobar.db"))}
 
     def run(self):
         self.table1["foo"] = "bar"
+        self.table1["22"] = "14"
+        self.table3["ABCD"] = "foo"
+
         keys, values = self.table1.value
         assert set(keys) == set(["key", "value"])
         self.table2.insert(foo=23)
@@ -35,6 +39,7 @@ if __name__ == "__main__":
     e2 = SimpleExperiment2()
     r2 = e2(se=r1)
 
+    r1 = r2 =None
     if r1:
         shutil.rmtree(r1)
 

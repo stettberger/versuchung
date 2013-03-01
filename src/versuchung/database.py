@@ -281,11 +281,11 @@ class TableDict(Table, dict):
     done lazy. Therefore the data is only then visible if the
     experiment was successful.
     """
-    def __init__(self, key_name='key', value_name='value', db=None):
-        self.__key_name = key_name
-        self.__value_name = value_name
-        columns = [(key_name, 'text'), (value_name, 'text')]
-        Table.__init__(self, columns, index=key_name, db=db)
+    def __init__(self, db=None):
+        self.__key_name = "key"
+        self.__value_name = "value"
+        columns = [(self.__key_name, 'text'), (self.__value_name, 'text')]
+        Table.__init__(self, columns, index=self.__key_name, db=db)
         dict.__init__(self)
 
     def insert(self, *args, **kwargs):
@@ -313,4 +313,93 @@ class TableDict(Table, dict):
             value_index = header.index(self.__value_name)
             self.update([(x[key_index], x[value_index]) for x in values])
 
+
+
+class Database_SQlite_Merger:
+    def log(self, msg, *args):
+        print "merger: " + (msg % args)
+
+    def __init__(self, target_path, source_paths = []):
+        self.target_path = target_path
+        self.source_paths = {}
+        self.target = sqlite3.connect(target_path)
+
+        db_counter = 0
+        for source in source_paths:
+            assert os.path.exists(source), "Path does not exist " + source
+            name = "db_%d" % db_counter
+            db_counter += 1
+            self.target.execute("ATTACH DATABASE '%s' AS %s" %(source, name))
+            self.log("attached %s as %s", source, name)
+            self.source_paths[name] = source
+
+    def collect_and_create_tables(self):
+        cur = self.target.cursor()
+        self.tables = {}
+        for db in self.source_paths:
+            cur.execute("SELECT * FROM " + db + ".sqlite_master WHERE type = 'table'")
+            header = [x[0] for x in cur.description]
+            for table in cur.fetchall():
+                table = dict(zip(header, table))
+                name = table["name"]
+                if table["name"] in self.tables:
+                    if self.tables[name]["sql"] != table["sql"]:
+                        self.log("Two tables with different defintions found: %s" % name)
+                        sys.exit(-1)
+                    self.tables[name]["databases"].append(db)
+                else:
+                    self.tables[name] = table
+                    self.tables[name]["databases"] = [db]
+        for name, table in self.tables.items():
+            try:
+                cur.execute("DROP TABLE %s" % name)
+            except:
+                pass
+            cur.execute(table["sql"])
+            self.log("created table %s", name)
+
+        cur.close()
+
+    def collect_data(self):
+        cur = self.target.cursor()
+
+        TableDictrows = set()
+        
+        for name in self.tables:
+            rows = set()
+            headers = None
+            for db in self.tables[name]["databases"]:
+                cur.execute("SELECT * FROM %s.%s" % (db, name))
+                for i in cur.fetchall():
+                    rows.add(i)
+                headers = [x[0] for x in cur.description]
+
+            cur.executemany("INSERT INTO %s (%s) values(%s)" % (\
+                    name,
+                    ", ".join(headers),
+                    ", ".join(["?" for x in headers])
+                    ), rows)
+            self.log("inserted %d rows into %s", len(rows), name)
+
+
+            if headers == ["experiment", "key", "value"]:
+                TableDictrows.update(rows)
+        
+        cur.execute("CREATE TABLE IF NOT EXISTS TableDict (experiment text, key text, value text)")
+        cur.executemany("INSERT INTO TableDict (experiment, key, value) values(?,?,?)",
+                        TableDictrows)
+        self.log("inserted %d key-value pairs into TableDict", len(TableDictrows))
+        cur.close()
+        self.target.commit()
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) < 2:
+        print sys.argv[0] + " <target-database-file> [<source-db1> <source-db2> ...]"
+        print " -- merges different versuchung sqlite databases into a single one"
+        sys.exit(-1)
+
+    merger = Database_SQlite_Merger(sys.argv[1], sys.argv[2:])
+    merger.collect_and_create_tables()
+    merger.collect_data()
 

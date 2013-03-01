@@ -54,6 +54,11 @@ The ``foobar.db`` is constructed similar. But the
 SimpleExperiment__table2 there has only one column of type integer.
 
 
+If you have many sqlite files from different experiments. They can
+easily be merged by using the merge tool::
+
+    $ python -m versuchung.database target.db source1.db source2.db
+
 .. automodule:: versuchung.database
    :members:
 
