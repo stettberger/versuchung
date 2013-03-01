@@ -16,6 +16,7 @@ results. They are used in
    filesystem
    csv
    tex
+   database
    archives
    search
    tools
