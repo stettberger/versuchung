@@ -15,6 +15,9 @@ class SubObjects(dict):
         dict.__setitem__(self, key, value)
         self.update()
     def update(self):
+        if not "parent" in dir(self) and len(self) > 0:
+            print "You probably used python multiprocessing, this might break horrible"
+            return
         for name, obj in self.items():
             if self.parent.name != None:
                 obj.name = "%s-%s" % (self.parent.name, name)
