@@ -6,6 +6,23 @@ from  cStringIO import StringIO
 from optparse import OptionParser
 import copy
 
+class SubObjects(dict):
+    def __init__(self, type_object):
+        dict.__init__(self)
+        self.__parent__ = type_object
+    def __setitem__(self, key, value):
+        assert not key in self, "Duplicated object name: %s" % key
+        dict.__setitem__(self, key, value)
+        self.update()
+    def update(self):
+        for name, obj in self.items():
+            if self.__parent__.name != None:
+                obj.name = "%s-%s" % (self.__parent__.name, name)
+            else:
+                obj.name = name
+            obj.static_experiment  = self.__parent__.static_experiment
+            obj.dynamic_experiment = self.__parent__.dynamic_experiment
+
 
 class Type(object):
     static_experiment = None
@@ -20,26 +37,10 @@ class Type(object):
 
     parameter_type = None
 
-    class SubObjects(dict):
-        def __init__(self, type_object):
-            dict.__init__(self)
-            self.__parent__ = type_object
-        def __setitem__(self, key, value):
-            assert not key in self, "Duplicated object name: %s" % key
-            dict.__setitem__(self, key, value)
-            self.update()
-        def update(self):
-            for name, obj in self.items():
-                if self.__parent__.name != None:
-                    obj.name = "%s-%s" % (self.__parent__.name, name)
-                else:
-                    obj.name = name
-                obj.static_experiment  = self.__parent__.static_experiment
-                obj.dynamic_experiment = self.__parent__.dynamic_experiment
 
     def __init__(self):
         # We gather a list of objects that are used by us.
-        self.subobjects = self.SubObjects(self)
+        self.subobjects = SubObjects(self)
 
     def before_experiment_run(self, parameter_type):
         self.parameter_type = parameter_type
