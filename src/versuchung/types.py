@@ -9,19 +9,19 @@ import copy
 class SubObjects(dict):
     def __init__(self, type_object):
         dict.__init__(self)
-        self.__parent__ = type_object
+        self.parent = type_object
     def __setitem__(self, key, value):
         assert not key in self, "Duplicated object name: %s" % key
         dict.__setitem__(self, key, value)
         self.update()
     def update(self):
         for name, obj in self.items():
-            if self.__parent__.name != None:
-                obj.name = "%s-%s" % (self.__parent__.name, name)
+            if self.parent.name != None:
+                obj.name = "%s-%s" % (self.parent.name, name)
             else:
                 obj.name = name
-            obj.static_experiment  = self.__parent__.static_experiment
-            obj.dynamic_experiment = self.__parent__.dynamic_experiment
+            obj.static_experiment  = self.parent.static_experiment
+            obj.dynamic_experiment = self.parent.dynamic_experiment
 
 
 class Type(object):
