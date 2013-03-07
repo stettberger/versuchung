@@ -397,7 +397,8 @@ class Database_SQlite_Merger:
             if headers == ["experiment", "key", "value"]:
                 TableDictrows.update(rows)
         
-        cur.execute("CREATE TABLE IF NOT EXISTS TableDict (experiment text, key text, value text)")
+        cur.execute("CREATE TABLE IF NOT EXISTS TableDict (experiment text, key text, value text,"
+                    "UNIQUE (key) ON CONFLICT REPLACE)")
         cur.executemany("INSERT INTO TableDict (experiment, key, value) values(?,?,?)",
                         TableDictrows)
         self.log("inserted %d key-value pairs into TableDict", len(TableDictrows))
