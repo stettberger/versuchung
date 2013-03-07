@@ -201,13 +201,48 @@ class Bool(InputParameter, Type):
         return {self.name: self.value}
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
     @property
     def value(self):
-        """The value of the string. This is either the default value
+        """The value of the bool. This is either the default value
         or the parameter given on the command line"""
         return self.__value
+
+class Integer(InputParameter, Type):
+    """Can be used as: **input parameter**
+
+    A integer flag argument (will accept a number on the command line."""
+
+    def __init__(self, default_value = 0):
+        InputParameter.__init__(self)
+        Type.__init__(self)
+        self.__value = default_value
+
+    def inp_setup_cmdline_parser(self, parser):
+        self.inp_parser_add(parser, None, self.__value)
+    def inp_extract_cmdline_parser(self, opts, args):
+        self.__value = self.inp_parser_extract(opts, None)
+        if type(self.__value) == int:
+            pass
+        else:
+            try:
+                self.__value = int(self.__value)
+            except:
+                raise RuntimeError("Wrong parameter for Bool() argument (%s)" % self.__value)
+
+    def inp_metadata(self):
+        return {self.name: self.value}
+
+    def __str__(self):
+        return str(self.value)
+
+    @property
+    def value(self):
+        """The value of the integer. This is either the default value
+        or the parameter given on the command line"""
+        return self.__value
+
 
 
 class List(InputParameter, Type, list):

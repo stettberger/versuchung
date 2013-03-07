@@ -39,7 +39,6 @@ if __name__ == "__main__":
     e2 = SimpleExperiment2()
     r2 = e2(se=r1)
 
-    r1 = r2 =None
     if r1:
         shutil.rmtree(r1)
 

@@ -44,7 +44,8 @@ class Database_SQLite(InputParameter, OutputParameter, Type):
         if parameter_type == "output":
             try:
                 self.create_table("metadata", [("experiment", "text"), ("metadata", "text")],
-                                   primary = "experiment")
+                                  keys = ["experiment"],
+                                  conflict_strategy = "REPLACE")
                 self.execute("INSERT INTO metadata(experiment, metadata) values(?, ?)",
                              self.dynamic_experiment.experiment_identifier,
                              str(self.dynamic_experiment.metadata))
@@ -104,7 +105,8 @@ class Database_SQLite(InputParameter, OutputParameter, Type):
         logging.debug("sqlite: %s %s", str(command), str(args))
         return self.__database_connection.execute(command, args)
 
-    def create_table(self, name, fields = [("key", "text"), ("value", "text")], primary = None):
+    def create_table(self, name, fields = [("key", "text"), ("value", "text")], 
+                     keys = None, conflict_strategy = "REPLACE"):
         """Creates a new table in the database. ``name`` is the name
         of newly created table. The ``fields`` are a list of
         columns. A column is a tuple, its first entry is the name, its
@@ -113,14 +115,13 @@ class Database_SQLite(InputParameter, OutputParameter, Type):
         table."""
 
         CT = "CREATE TABLE " + name + " ("
-        for i in range(0, len(fields)):
-            field, datatype = fields[i]
-            CT += field + " " + datatype
-            if field == primary:
-                CT += " PRIMARY KEY"
-            if i != len(fields) - 1:
-                CT += ", "
+        CT += ", ".join([ "%s %s" % x for x in fields])
+        if keys:
+            assert set(keys).issubset(set([x[0] for x in fields]))
+            CT += ", UNIQUE(" + (", ".join(keys)) + ")"
+            CT += " ON CONFLICT "  + conflict_strategy
         CT += ")"
+
         return self.execute(CT)
 
     def values(self, table_name, filter_expr = "where experiment = ?", *args):
@@ -175,16 +176,19 @@ class Table(InputParameter, OutputParameter, Type):
     with type text. If a db is given this one is used instead of a
     default sqlite database named ``sqlite3.db``
 
-    The index parameter makes a field the primary key.
+    To make a set of field the index keys (UNIQUE), give it as a list
+    of string as keys argument. The conflict_stragety gives the SQL
+    strategy what to do on conflict.
     """
-    def __init__(self, fields,  index = None, db = None):
+    def __init__(self, fields, keys = None, db = None, conflict_strategy = "FAIL" ):
         self.read_only = True
         InputParameter.__init__(self)
         OutputParameter.__init__(self)
         Type.__init__(self)
 
-        self.__index = index
+        self.__keys = keys
         self.__fields = self.__field_typify(["experiment"] + fields)
+        self.__conflict_strategy = conflict_strategy
 
         if not db:
             self.__db = Database()
@@ -210,7 +214,8 @@ class Table(InputParameter, OutputParameter, Type):
         if parameter_type == "output":
             self.read_only = False
             self.__db.create_table(self.table_name, self.__fields,
-                                   primary = self.__index)
+                                   keys = self.__keys,
+                                   conflict_strategy = self.__conflict_strategy)
     @property
     def database(self):
         """:return: :class:`~versuchung.database.Database` -- the database the table is located in"""
@@ -285,7 +290,8 @@ class TableDict(Table, dict):
         self.__key_name = "key"
         self.__value_name = "value"
         columns = [(self.__key_name, 'text'), (self.__value_name, 'text')]
-        Table.__init__(self, columns, index=self.__key_name, db=db)
+        Table.__init__(self, columns, keys=[self.__key_name], db=db,
+                       conflict_strategy = "REPLACE")
         dict.__init__(self)
 
     def insert(self, *args, **kwargs):
@@ -317,10 +323,12 @@ class TableDict(Table, dict):
 
 class Database_SQlite_Merger:
     def log(self, msg, *args):
-        print "merger: " + (msg % args)
+        if self.logging:
+            print "merger: " + (msg % args)
 
-    def __init__(self, target_path, source_paths = []):
+    def __init__(self, target_path, source_paths = [], logging = True):
         self.target_path = target_path
+        self.logging = logging
         self.source_paths = {}
         self.target = sqlite3.connect(target_path)
 
@@ -333,7 +341,7 @@ class Database_SQlite_Merger:
             self.log("attached %s as %s", source, name)
             self.source_paths[name] = source
 
-    def collect_and_create_tables(self):
+    def collect_and_create_tables(self, drop = True):
         cur = self.target.cursor()
         self.tables = {}
         for db in self.source_paths:
@@ -351,11 +359,15 @@ class Database_SQlite_Merger:
                     self.tables[name] = table
                     self.tables[name]["databases"] = [db]
         for name, table in self.tables.items():
-            try:
-                cur.execute("DROP TABLE %s" % name)
-            except:
-                pass
-            cur.execute(table["sql"])
+            if drop:
+                try:
+                    cur.execute("DROP TABLE %s" % name)
+                except:
+                    pass
+                cur.execute(table["sql"])
+            else:
+                cur.execute(table["sql"].replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS'))
+
             self.log("created table %s", name)
 
         cur.close()
@@ -392,6 +404,13 @@ class Database_SQlite_Merger:
         cur.close()
         self.target.commit()
 
+    def merge(self, update = True):
+        """Do the actual merge operation"""
+        self.collect_and_create_tables(drop = not update)
+        self.collect_data()
+        self.target.close()
+        
+
 if __name__ == '__main__':
     import sys
     if len(sys.argv) < 2:
@@ -400,6 +419,5 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     merger = Database_SQlite_Merger(sys.argv[1], sys.argv[2:])
-    merger.collect_and_create_tables()
-    merger.collect_data()
+    merger.merge()
 
