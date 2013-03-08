@@ -6,7 +6,8 @@ As a quick start a simple experiment with input and output parameters is show::
     #!/usr/bin/python
 
     from versuchung.experiment import Experiment
-    from versuchung.types import String, File
+    from versuchung.types import String
+    from versuchung.files import File
     
     class SimpleExperiment(Experiment):
         inputs = {"input_key": String("default key"),
@@ -46,7 +47,7 @@ specified default value. This default value is used if no argument is
 given on the command line. The attribute
 :attr:`~versuchung.experiment.Experiment.outputs` defines the
 output parameter ``"output_file"`` which is of type
-:class:`~versuchung.types.File` with the filename ``"output"``. So
+:class:`~versuchung.files.File` with the filename ``"output"``. So
 in the experiment output there will be a file called *output*.
 
 The :meth:`~versuchung.experiment.Experiment.run` method is the
