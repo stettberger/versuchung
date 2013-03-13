@@ -178,7 +178,11 @@ class Table(InputParameter, OutputParameter, Type):
 
     To make a set of field the index keys (UNIQUE), give it as a list
     of string as keys argument. The conflict_stragety gives the SQL
-    strategy what to do on conflict.
+    strategy what to do on conflict. If you want to merge databases from
+    multiple experiments without triggering a conflict if the given key
+    set is equal (i.e., if you want the same values in the columns given
+    as keys to be treated different when coming from different
+    experiments), add ``experiment`` to the key set.
     """
     def __init__(self, fields, keys = None, db = None, conflict_strategy = "FAIL" ):
         self.read_only = True
