@@ -5,7 +5,7 @@ from versuchung.tools import before
 from cStringIO import StringIO
 import shutil
 import csv
-import os
+import os, stat
 
 class FilesystemObject(InputParameter, OutputParameter, Type):
     def __init__(self, default_name=""):
@@ -115,6 +115,11 @@ class File(FilesystemObject):
         with open(filename) as fd:
             self.value = self.after_read(fd.read())
         self.flush()
+
+    def make_executable(self):
+        """makes a file exectuable (chmod +x $file)"""
+        st = os.stat(self.path)
+        os.chmod(self.path, st.st_mode | stat.S_IEXEC)
 
     def after_read(self, value):
         """To provide filtering of file contents in subclasses, overrwrite this method.
