@@ -124,7 +124,11 @@ class Experiment(Type, InputParameter):
         self.outputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.outputs))
         self.o = self.outputs
 
-        self.base_directory = os.path.abspath(os.curdir)
+        if default_experiment_instance != None:
+            self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
+            self.base_directory = os.path.realpath(self.base_directory)
+        else:
+            self.base_directory = os.path.realpath(os.curdir)
 
         for (name, inp) in self.inputs.items():
             if type(inp) == LambdaType:
@@ -201,6 +205,7 @@ class Experiment(Type, InputParameter):
         if self.__opts.do_list:
             for experiment in os.listdir(self.base_directory):
                 if experiment.startswith(self.title):
+                    print "EXP", experiment
                     self.__do_list(self.__class__(experiment))
             return None
 
@@ -246,14 +251,17 @@ class Experiment(Type, InputParameter):
 
 
     def __do_list(self, experiment, indent = 0):
-        with open(os.path.join(experiment.__experiment_instance, "metadata")) as fd:
+        with open(os.path.join(experiment.base_directory, "metadata")) as fd:
             content = fd.read()
         d = eval(content)
         content = experiment.__experiment_instance + "\n" + content
         print "+%s%s" % ("-" * indent,
                         content.strip().replace("\n", "\n|" + (" " * (indent+1))))
-        for dirname in os.listdir("."):
-            if dirname in d.values():
+        for dirname in d.values():
+            if type(dirname) != type(""):
+                continue
+            if os.path.exists(os.path.join(dirname, "metadata")) and \
+               os.path.realpath(dirname) != os.path.realpath(experiment.base_directory):
                 self.__do_list(Experiment(dirname), indent + 3)
 
     def before_experiment_run(self, parameter_type):
