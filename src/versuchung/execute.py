@@ -9,6 +9,13 @@ import thread
 import time
 import pipes
 from versuchung.tools import AdviceManager, Advice
+from multiprocessing import cpu_count as __cpu_count
+
+
+try:
+    cpu_count = __cpu_count()
+except NotImplementedError:
+    cpu_count = 1
 
 class CommandFailed(RuntimeError):
     """ Indicates that some command failed
@@ -18,15 +25,16 @@ class CommandFailed(RuntimeError):
 
         returncode:  the exitcode of the failed command
     """
-    def __init__(self, command, returncode):
+    def __init__(self, command, returncode, stdout=""):
         assert(returncode != 0)
         self.command = command
         self.returncode = returncode
         self.repr = "Command %s failed to execute (returncode: %d)" % \
             (command, returncode)
+        self.stdout = stdout
         RuntimeError.__init__(self, self.repr)
     def __str__(self):
-        return self.repr
+        return self.repr + "\n\nSTDOUT:\n" + self.stdout
 
 def quote_args(args):
     if len(args) == 1 and type(args[0]) == dict:
@@ -55,7 +63,7 @@ def __shell(failok, command, *args):
         stdout = stdout[:-1]
 
     if not failok and p.returncode != 0:
-        raise CommandFailed(command, p.returncode)
+        raise CommandFailed(command, p.returncode, stdout)
 
     return (stdout.__str__().rsplit('\n'), p.returncode)
 
