@@ -265,9 +265,9 @@ class Experiment(Type, InputParameter):
                 self.__do_list(Experiment(dirname), indent + 3)
 
     def before_experiment_run(self, parameter_type):
+        # When experiment run as input, just run the normal input handlers
         if parameter_type == "input":
-            for (name, outp) in self.outputs.items():
-                outp.before_experiment_run("input")
+            Type.before_experiment_run(self, "input")
             return
 
         for (name, inp) in self.inputs.items():
@@ -284,6 +284,7 @@ class Experiment(Type, InputParameter):
                 continue
             inp = inp(self)
             inp.name = name
+            self.subobjects[name] = inp
             self.inputs[name] = inp
 
         self.__setup_tmp_directory()
