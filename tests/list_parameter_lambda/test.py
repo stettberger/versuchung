@@ -1,6 +1,7 @@
 from versuchung.experiment import Experiment
 from versuchung.types import String, List
 from versuchung.files import File
+from versuchung.archives import GzipFile
 from versuchung.search import search_experiment_results
 
 def find_results():
@@ -10,7 +11,8 @@ def find_results():
 class SimpleExperiment(Experiment):
     inputs = {"input_key": String("default key"),
               "input_value": String("default value")}
-    outputs = {"output_file": File("output")}
+    outputs = {"output_file": File("output"),
+               "gzip": GzipFile("foo.gz") }
 
     def run(self):
         # Combine the input parameters
@@ -19,6 +21,7 @@ class SimpleExperiment(Experiment):
 
         # write the result to the output file
         self.outputs.output_file.value = content + "\n"
+        self.gzip.value = "BAR"
 
 class SimpleExperiment2(Experiment):
     inputs = {"se": lambda x: List(SimpleExperiment(), default_value = find_results())}
@@ -34,6 +37,7 @@ class SimpleExperiment2(Experiment):
 
         for i in self.se:
             assert "abc:" in i.output_file.value
+            assert i.gzip.value == "BAR"
 
 
 if __name__ == "__main__":

@@ -265,6 +265,7 @@ class GzipFile(File):
         File.value.fset(self, value)
 
     def before_experiment_run(self, parameter_type):
+        self.parameter_type = parameter_type
         if parameter_type == "input":
             self.__original_filename = File.path.fget(self)
             self.subobjects["filename"] = File(self.__original_filename)
