@@ -322,6 +322,7 @@ class List(InputParameter, Type, list):
             for i in self.__default_value:
                 self.subobjects["%d" % count] = i
                 self.append(i)
+                count += 1
 
         Type.before_experiment_run(self,parameter_type)
 
