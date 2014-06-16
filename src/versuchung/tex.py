@@ -79,20 +79,20 @@ class PgfKeyDict(File, dict):
        which cannot be used in TeX macro names.
     """
 
-    __format = r'\pgfkeyssetvalue{/%s/%s}{%s}'
-
-    def __init__(self, filename = "data.tex", pgfkey = "versuchung"):
-        self.__pgfkey = pgfkey
-
+    def __init__(self, filename = "data.tex", pgfkey = "/versuchung", setmacro="pgfkeyssetvalue"):
         File.__init__(self, filename)
         dict.__init__(self)
+
+        self.__pgfkey = pgfkey
+        self.format_string = "\\" + setmacro + "{%s/%s}{%s}"
 
         # Ensure the file is written
         if os.path.exists(self.path):
             a = self.value
 
+
     def after_read(self, value):
-        regex = self.__format %(self.__pgfkey,"([^{}]*)", "([^{}]*)")
+        regex = self.format_string %(self.__pgfkey,"([^{}]*)", "([^{}]*)")
         regex.replace(r'\\', r'\\')
         for line in value.split("\n"):
             m = re.search(regex, line)
@@ -112,7 +112,7 @@ class PgfKeyDict(File, dict):
             if last_base_key and last_base_key != base_key:
                 v.append("")
             last_base_key = base_key
-            v.append(self.__format % (self.__pgfkey, key, value))
+            v.append(self.format_string % (self.__pgfkey, key, value))
 
         return "\n".join(v) + "\n"
 
