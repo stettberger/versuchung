@@ -41,6 +41,14 @@ class FilesystemObject(InputParameter, OutputParameter, Type):
                 self.__enclosing_directory = os.path.abspath(os.curdir)
         return os.path.join(self.__enclosing_directory, self.__object_name)
 
+    @property
+    def basename(self):
+        return os.path.basename(self.path)
+
+    @property
+    def dirname(self):
+        return os.path.basename(self.path)
+
     def set_path(self, base_directory, object_name):
         assert base_directory[0] == "/"
         self.__force_enclosing_directory = True
@@ -175,6 +183,20 @@ class Directory(FilesystemObject, Directory_op_with):
         if not self.__value:
             self.__value = os.listdir(self.path)
         return self.__value
+
+    def __iter__(self):
+        for name in self.value:
+            p = os.path.join(self.path, name)
+            if os.path.isdir(p):
+                d = Directory(name)
+                d.set_path(self.path, p)
+                self.subobjects[name] = d
+                yield d
+            else:
+                f = File(name)
+                f.set_path(self.path, p)
+                self.subobjects[name] = f
+                yield f
 
     def before_experiment_run(self, parameter_type):
         FilesystemObject.before_experiment_run(self, parameter_type)
