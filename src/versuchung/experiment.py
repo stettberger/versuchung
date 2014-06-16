@@ -355,7 +355,7 @@ class Experiment(Type, InputParameter):
 
             # Create a Symlink to the newsest result set
             if self.__opts.do_symlink:
-                link = os.path.join(self.base_directory, self.title)
+                link = os.path.join(self.__opts.base_dir, self.title)
                 if os.path.islink(link):
                     os.unlink(link)
 
