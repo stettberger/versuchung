@@ -1,9 +1,10 @@
 from versuchung.experiment import Experiment
-from versuchung.tex import Macros, PgfKeyDict
+from versuchung.tex import *
 
 class TexTest(Experiment):
     outputs = {"tex": Macros("macro.tex"),
-               "pgf": PgfKeyDict("pgf.tex")}
+               "pgf": PgfKeyDict("pgf.tex"),
+               "dref": DatarefDict("dref.tex") }
 
     def run(self):
         tex = self.o.tex
@@ -15,6 +16,7 @@ class TexTest(Experiment):
         pgf = self.o.pgf
 
         pgf["foobar"] = 23
+        self.dref["foobar"] = 42
 
 
 if __name__ == "__main__":
@@ -32,6 +34,10 @@ if __name__ == "__main__":
     assert len(pgf) == 1
     assert pgf["foobar"] == "23"
 
+    dref = DatarefDict(dirname + "/dref.tex")
+    a = dref.value
+    assert len(dref) == 1
+    assert dref["foobar"] == "42"
 
     shutil.rmtree(dirname)
     print "success"

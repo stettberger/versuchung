@@ -93,7 +93,7 @@ class PgfKeyDict(File, dict):
 
     def after_read(self, value):
         regex = self.format_string %(self.__pgfkey,"([^{}]*)", "([^{}]*)")
-        regex.replace(r'\\', r'\\')
+        regex = regex.replace('\\', r'\\')
         for line in value.split("\n"):
             m = re.search(regex, line)
             if m:
@@ -135,6 +135,14 @@ class PgfKeyDict(File, dict):
 
     def prefixed_with(self, prefix):
         return self.PrefixForPgfKeyDict(prefix, self)
+
+class DatarefDict(PgfKeyDict):
+    """Can be used as: **input parameter** and **output parameter**
+
+    DatarefDict is like :class:`~versuchung.tex.PgfKeyDict`, but generates keys for dataref."""
+
+    def __init__(self, filename = "data.tex", key = ""):
+        PgfKeyDict.__init__(self, filename, key, "drefset")
 
 if __name__ == '__main__':
     import sys
