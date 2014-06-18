@@ -198,7 +198,6 @@ class Experiment(Type, InputParameter):
         os.chdir(opts.base_dir)
         setup_logging(opts.verbose)
 
-
         self.__opts = opts
         self.__args = args
 
@@ -377,6 +376,10 @@ class Experiment(Type, InputParameter):
         if not self.__experiment_instance:
             print "Missing argument for %s" % self.title
             raise ExperimentError
+
+        # Resolve symlink relative to the current directory
+        self.__experiment_instance = os.path.realpath(self.__experiment_instance)
+        self.__experiment_instance = self.__experiment_instance[len(os.path.realpath(os.curdir))+1:]
 
         self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
         self.base_directory = os.path.realpath(self.base_directory)
