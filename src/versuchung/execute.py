@@ -57,7 +57,13 @@ def __shell(failok, command, *args):
 
     logging.debug("executing: " + command)
     p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
-    (stdout, _)  = p.communicate() # ignore stderr
+    stdout = ""
+    while True:
+        x = p.stdout.readline()
+        if not x:
+            break
+        stdout += x
+        logging.debug("stdout|%s", x.replace("\n", ""))
     p.wait()
     if len(stdout) > 0 and stdout[-1] == '\n':
         stdout = stdout[:-1]

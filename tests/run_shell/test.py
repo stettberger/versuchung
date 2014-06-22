@@ -21,6 +21,8 @@ class ShellExperiment(Experiment):
 
         assert (['2 23'], 0) == shell("echo %(foo)s %(bar)s", {"foo": "2", "bar": "23"})
 
+        shell("cat %s", __file__)
+
 if __name__ == "__main__":
     import shutil
     experiment = ShellExperiment()
