@@ -259,6 +259,17 @@ class Directory(FilesystemObject, Directory_op_with):
         return f
 
     @__ensure_dir_exists
+    def new_directory(self, name):
+        """Generate a new :class:`~versuchung.files.Directory` in the
+        directory. The directory <name> must not be present before"""
+        f = Directory(name)
+        f.set_path(self.path, name)
+        os.mkdir(f.path)
+        self.subobjects[name] = f
+        return f
+
+
+    @__ensure_dir_exists
     def mirror_directory(self, path, include_closure = None):
         """Copies the contents of the given directory to this
         directory.
