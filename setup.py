@@ -4,13 +4,6 @@ from distutils.core import setup
 from distutils.cmd import Command
 from distutils.spawn import spawn
 
-from doc.conf import release, version
-
-name = "versuchung"
-
-print "version: " + version
-print "release: " + release
-
 try:
     from sphinx.setup_command import BuildDoc
     cmdclass = {'doc': BuildDoc}
@@ -32,12 +25,26 @@ class TestCommand(Command):
 
 cmdclass["test"] = TestCommand
 
-setup(name=name,
-      version=version,
-      description='a toolbox for experiments',
-      author='Christian Dietrich',
-      author_email='stettberger@dokucode.de',
-      packages = ["versuchung"],
+version_info = {
+    'name': 'versuchung',
+    'version': '1.0',
+    'description': 'A toolbox for experiments',
+    'author': 'Christian Dietrich',
+    'author_email': 'stettberger@dokucode.de',
+    'url': 'http://dokucode.de/stettberger/versuchung',
+    'license': 'GPLv3',
+    'classifiers': [
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.4' ],
+}
+
+
+setup(packages = ["versuchung"],
       package_dir = {'versuchung': 'src/versuchung'},
-      cmdclass = cmdclass
-      )
+      cmdclass = cmdclass,
+      **version_info
+  )
