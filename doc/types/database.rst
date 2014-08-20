@@ -19,7 +19,7 @@ database table as an output is shown as an example::
 
   class SimpleExperiment(Experiment):
     outputs = {'table1': TableDict(),
-               "table2": Table([("foo", "integer")], db = Database("foobar.db"))}
+               "table2": Table([("foo", "integer")], db = Database(path="foobar.db"))}
 
     def run(self):
         self.table1["key1"] = "value1"
@@ -58,6 +58,10 @@ If you have many sqlite files from different experiments. They can
 easily be merged by using the merge tool::
 
     $ python -m versuchung.database target.db source1.db source2.db
+
+
+Additionally to SQLite3 databases, also a MySQL database can be
+used. But this feature is not very well tested yet.
 
 .. automodule:: versuchung.database
    :members:
