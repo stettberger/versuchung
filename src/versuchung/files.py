@@ -6,6 +6,7 @@ from cStringIO import StringIO
 import shutil
 import csv
 import os, stat
+import hashlib
 
 class FilesystemObject(InputParameter, OutputParameter, Type):
     def __init__(self, default_name=""):
@@ -138,6 +139,50 @@ class File(FilesystemObject):
         """To provide filtering of file contents in subclasses, overrwrite this method.
         This method gets the value() and returns a string, when the file is written to disk"""
         return value
+
+class Executable(File):
+    """Can be used as: **input parameter**
+
+    An executable is a :class:`versuchung.files.File` that only
+    references an executable. It checksums the executable and puts the
+    checksum into the metadata. The executable is never changed.
+
+    """
+    def __init__(self, default_filename):
+        File.__init__(self, default_filename)
+
+    @property
+    def value(self):
+        raise NotImplemented
+
+    @value.setter
+    def value(self, value):
+        raise NotImplementedError
+
+    def write(self, content, append = False):
+        raise NotImplementedError
+
+    def after_experiment_run(self, parameter_type):
+        pass
+
+    def flush(self):
+        raise NotImplementedError
+
+    def copy_contents(self, filename):
+        raise NotImplementedError
+
+    def make_executable(self):
+        raise NotImplementedError
+
+    def inp_metadata(self):
+        return {self.name + "-md5": hashlib.md5(open(self.path).read()).hexdigest()}
+
+    def execute(self, cmdline, *args):
+        """Does start the executable with meth:`versuchung.execute.shell` and
+        args, which is of type list, as arguments."""
+        from versuchung.execute import shell
+
+        shell(self.path + " " + cmdline, *args)
 
 class Directory_op_with:
     def __init__(self):
