@@ -187,15 +187,18 @@ class Bool(InputParameter, Type):
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, self.__value)
     def inp_extract_cmdline_parser(self, opts, args):
+        yes_values = ("yes", "y", "true", "1")
+        no_values  = ("no", "n", "false", "0")
         self.__value = self.inp_parser_extract(opts, None)
-        if self.__value == "yes":
+        if type(self.value) == str and self.__value.lower() in yes_values:
             self.__value = True
-        elif self.__value == "no":
+        elif type(self.value) == str and self.__value.lower() in no_values:
             self.__value = False
         elif type(self.__value) == bool:
             pass
         else:
-            raise RuntimeError("Wrong parameter for Bool() argument (%s)" % self.__value)
+            raise RuntimeError("Wrong parameter for Bool() argument (%s = %s), possible values are %s, %s" %\
+                               (self.name, self.__value, yes_values, no_values))
 
     def inp_metadata(self):
         return {self.name: self.value}
