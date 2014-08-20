@@ -31,7 +31,7 @@ version_info = {
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
-    'url': 'http://dokucode.de/stettberger/versuchung',
+    'url': 'http://github.de/stettberger/versuchung',
     'license': 'GPLv3',
     'classifiers': [
         'Development Status :: 4 - Beta',
