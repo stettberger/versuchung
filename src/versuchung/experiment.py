@@ -329,6 +329,7 @@ class Experiment(Type, InputParameter):
         metadata["date-start"] = str(datetime.datetime.now())
         metadata["experiment-name"] = self.title
         metadata["experiment-version"] = self.version
+        metadata["experiment-hash"]    = m.hexdigest()
 
         fd = open(os.path.join(self.base_directory, "metadata"), "w+")
         fd.write(pprint.pformat(metadata) + "\n")
