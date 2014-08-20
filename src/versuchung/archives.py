@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from versuchung.types import Type, InputParameter
 from versuchung.files import Directory, Directory_op_with, File
 from versuchung.execute import shell

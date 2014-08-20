@@ -11,8 +11,9 @@ class SubObjects(dict):
         dict.__init__(self)
         self.parent = type_object
     def __setitem__(self, key, value):
-        assert not key in self, "Duplicated object name: %s" % key
+        assert not key in self or self[key] == value, "Duplicated object name: %s = %s" % (key, value)
         dict.__setitem__(self, key, value)
+        value.parent_object = self.parent
         self.update()
     def update(self):
         if not "parent" in dir(self) and len(self) > 0:
@@ -38,8 +39,10 @@ class Type(object):
     """A Type.Subobjects instance that collects all Types that are
        used by this type. Subordinate types"""
 
-    parameter_type = None
+    parent_object = None
+    """A Type instance that is the parent of this object"""
 
+    parameter_type = None
 
     def __init__(self):
         # We gather a list of objects that are used by us.
@@ -65,6 +68,15 @@ class Type(object):
     @name.setter
     def name(self, name):
         self.__name = name
+
+    def path_to_root_object(self):
+        """Returns all parent objects"""
+        ret = []
+        p = self
+        while p.parent_object != None:
+            ret.append(p)
+            p = p.parent_object
+        return list(reversed(ret))
 
     @property
     def value(self):

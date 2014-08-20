@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from optparse import OptionParser
 import datetime
 import logging
@@ -130,7 +128,9 @@ class Experiment(Type, InputParameter):
         else:
             self.base_directory = os.path.realpath(os.curdir)
 
+        # Sanity checking for input parameters.
         for (name, inp) in self.inputs.items():
+            # Lambdas are resolved, when the experiment is really started
             if type(inp) == LambdaType:
                 continue
             if not isinstance(inp, InputParameter):
@@ -286,6 +286,9 @@ class Experiment(Type, InputParameter):
             self.subobjects[name] = inp
             self.inputs[name] = inp
 
+        self.subobjects.update()
+
+        # Now set up the experiment tmp directory
         self.__setup_tmp_directory()
 
         for obj in self.inputs.values():
