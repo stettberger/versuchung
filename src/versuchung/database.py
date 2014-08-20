@@ -5,8 +5,165 @@ import logging
 import sqlite3
 import os, stat
 
+# Import mysql handler
+try:
+    import MySQLdb
+    import _mysql_exceptions
+except:
+    pass
 
-class Database_SQLite(InputParameter, OutputParameter, Type):
+
+class Database_Abstract:
+    def values(self, table_name, filter_expr = "where experiment = ?", *args):
+        """Get the contets of a table in the database. It takes
+        addtional to the table name, a filter expression and applies
+        all args to the excute command. An example::
+
+           (cols, rows) = database.values("metadata", "")
+           for row in rows:
+                print cols, rows
+        """
+        cur = self.handle.cursor()
+        cur.execute('select * from ' + table_name + filter_expr,
+                    args)
+
+        cols = [x[0] for x in cur.description]
+        def generator():
+            while True:
+                row = cur.fetchone()
+                if row == None:
+                    cur.close()
+                    return
+                yield row
+
+        index = cols.index("experiment")
+        return cols, generator()
+
+class Database_MySQL(InputParameter, OutputParameter, Type, Database_Abstract):
+    """Can be used as **input parameter** and **output parameter**
+
+    A database backend class for a MySQL database."""
+
+    def __init__(self, database = None, host = "localhost", user = None, password = None):
+        InputParameter.__init__(self)
+        OutputParameter.__init__(self)
+        Type.__init__(self)
+
+        assert database != None, "Please give a database name to database connection"
+
+        self.__database_name = database
+        self.__database_host = os.environ.get("MYSQL_HOST", None) or host
+        self.__database_user = os.environ.get("MYSQL_USER", None) or user
+        self.__database_password = os.environ.get("MYSQL_PASSWORD", None) or password
+        self.__database_connection = None
+
+    def inp_setup_cmdline_parser(self, parser):
+        self.inp_parser_add(parser, "database", self.__database_name)
+        self.inp_parser_add(parser, "host", self.__database_host)
+        self.inp_parser_add(parser, "user", self.__database_user)
+        self.inp_parser_add(parser, "password", self.__database_password)
+
+    def inp_extract_cmdline_parser(self, opts, args):
+        self.__database_name = self.inp_parser_extract(opts, "database")
+        self.__database_host = self.inp_parser_extract(opts, "host")
+        self.__database_user = self.inp_parser_extract(opts, "user")
+        self.__database_password = self.inp_parser_extract(opts, "password")
+
+
+    def inp_metadata(self):
+        return {self.name + "-database": self.__database_name,
+                self.name + "-host": self.__database_host}
+
+    def install_my_cnf(self):
+        """Creates a my.cnf file and sets the environment variable MYSQL_HOME"""
+        directory = self.tmp_directory.new_directory(self.name)
+        path = os.path.join(directory.path, "my.cnf")
+        logging.debug("MYSQL_HOME=%s", path)
+        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, 0600), 'w') as handle:
+            handle.write("""[client]
+host=%s
+user=%s
+password=%s
+database=%s
+""" %(self.__database_host, self.__database_user, self.__database_password, self.__database_name))
+
+        # Set the environment variable to the directory the my.cnf is located
+        os.environ["MYSQL_HOME"] = directory.path
+
+        if os.path.exists(os.path.join(os.environ["HOME"], ".my.cnf")):
+            logging.warning("~/.my.cnf does overwrite versuchung's file")
+
+    def before_experiment_run(self, parameter_type):
+        Type.before_experiment_run(self, parameter_type)
+        assert parameter_type in ["input", "output"]
+
+        args = {"db": self.__database_name,
+                "host": self.__database_host}
+        if self.__database_user:
+            args["user"] = self.__database_user
+        if self.__database_password:
+            args["passwd"] = self.__database_password
+
+        default_file = os.path.join(os.environ["HOME"], ".my.cnf")
+        if os.path.exists(default_file):
+            args["read_default_file"] = default_file
+
+        self.__database_connection = MySQLdb.connect(**args)
+
+        if parameter_type == "output":
+            try:
+                self.create_table("metadata", [("experiment", "varchar(256)"), ("metadata", "text")],
+                                  keys = ["experiment"],
+                                  conflict_strategy = "REPLACE")
+            except _mysql_exceptions.OperationalError as e:
+                # Metadata table was already generated
+                pass
+
+            self.execute("REPLACE INTO metadata(experiment, metadata) values(?, ?)",
+                         self.dynamic_experiment.experiment_identifier,
+                         str(self.dynamic_experiment.metadata))
+
+    @property 
+    def handle(self):
+        """:return: handle -- MySQLdb database handle"""
+        assert self.__database_connection
+        return self.__database_connection
+
+    def execute(self, command, *args):
+        """Execute command including the arguments on the sql
+        handle. Question marks in the command are replaces by the ``*args``::
+
+        >>> database.execute("SELECT * FROM metadata WHERE experiment = ?", identifer)
+        """
+        logging.debug("mysql: %s %s", str(command), str(args))
+        c = self.__database_connection.cursor()
+        c.execute(command.replace("?", "%s"), args)
+        self.__database_connection.commit()
+        return c
+
+    def create_table(self, name, fields = [("key", "text"), ("value", "text")], 
+                     keys = None, conflict_strategy = None):
+        """Creates a new table in the database. ``name`` is the name
+        of newly created table. The ``fields`` are a list of
+        columns. A column is a tuple, its first entry is the name, its
+        second entry the column type. If primary is the name of a
+        column this column is marked as the primary key for the
+        table.
+
+        conflict_strategy is ignored!
+        """
+
+        CT = "CREATE TABLE " + name + " ("
+        CT += ", ".join([ "%s %s" % x for x in fields])
+        if keys:
+            assert set(keys).issubset(set([x[0] for x in fields]))
+            CT += ", UNIQUE(" + (", ".join(keys)) + ")"
+        CT += ")"
+
+        return self.execute(CT)
+
+
+class Database_SQLite(InputParameter, OutputParameter, Type, Database_Abstract):
     """Can be used as **input parameter** and **output parameter**
 
     A database backend class for sqlite3 database."""
@@ -46,12 +203,14 @@ class Database_SQLite(InputParameter, OutputParameter, Type):
                 self.create_table("metadata", [("experiment", "text"), ("metadata", "text")],
                                   keys = ["experiment"],
                                   conflict_strategy = "REPLACE")
-                self.execute("INSERT INTO metadata(experiment, metadata) values(?, ?)",
-                             self.dynamic_experiment.experiment_identifier,
-                             str(self.dynamic_experiment.metadata))
             except sqlite3.OperationalError as e:
                 # Metadata table was already generated
                 pass
+
+            self.execute("INSERT INTO metadata(experiment, metadata) values(?, ?)",
+                         self.dynamic_experiment.experiment_identifier,
+                         str(self.dynamic_experiment.metadata))
+
 
 
     def after_experiment_run(self, parameter_type):
@@ -105,6 +264,8 @@ class Database_SQLite(InputParameter, OutputParameter, Type):
         logging.debug("sqlite: %s %s", str(command), str(args))
         return self.__database_connection.execute(command, args)
 
+
+
     def create_table(self, name, fields = [("key", "text"), ("value", "text")], 
                      keys = None, conflict_strategy = "REPLACE"):
         """Creates a new table in the database. ``name`` is the name
@@ -124,42 +285,24 @@ class Database_SQLite(InputParameter, OutputParameter, Type):
 
         return self.execute(CT)
 
-    def values(self, table_name, filter_expr = "where experiment = ?", *args):
-        """Get the contets of a table in the database. It takes
-        addtional to the table name, a filter expression and applies
-        all args to the excute command. An example::
-
-           (cols, rows) = database.values("metadata", "")
-           for row in rows:
-                print cols, rows
-        """
-        cur = self.handle.cursor()
-        cur.execute('select * from ' + table_name + filter_expr,
-                    args)
-
-        cols = [x[0] for x in cur.description]
-        def generator():
-            while True:
-                row = cur.fetchone()
-                if row == None:
-                    cur.close()
-                    return
-                yield row
-
-        index = cols.index("experiment")
-        return cols, generator()
 
 
-def Database(path = "sqlite3.db", database_type = "sqlite", *args, **kwargs):
+def Database( database_type = "sqlite", *args, **kwargs):
     """This is a just a wrapper around the supported database
     abstraction classes. Every other argument and paramater than
     ``database_type`` is forwared directly to those classes.
 
     Supported database_type abstractions are at the moment:
 
-    - ``sqlite`` -- :class:`~versuchung.database.Database_SQLite`"""
+    - ``sqlite`` -- :class:`~versuchung.database.Database_SQLite`
+    - ``mysql`` -- :class:`~versuchung.database.Database_MySQL`
+    """
     if database_type == "sqlite":
-        return Database_SQLite(path, *args, **kwargs)
+        if not "path" in kwargs:
+            kwargs["path"] = "sqlite3.db"
+        return Database_SQLite(*args, **kwargs)
+    if database_type == "mysql":
+        return Database_MySQL(*args, **kwargs)
     assert False, "Database type %s is not implemented yet" % database_type
 
 class Table(InputParameter, OutputParameter, Type):

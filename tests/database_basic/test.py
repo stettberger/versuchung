@@ -7,7 +7,7 @@ import os
 class SimpleExperiment(Experiment):
     outputs = {'table1': TableDict(),
                'table3': TableDict(),
-               "table2": Table([("foo", "integer")], db = Database("foobar.db"))}
+               "table2": Table([("foo", "integer")], db = Database(path="foobar.db"))}
 
     def run(self):
         self.table1["foo"] = "bar"
