@@ -1,8 +1,8 @@
-Search result sets as input parameters
+Search Result Sets as Input Parameters
 **************************************
 
 In large experiment setups it is challenging to keep track of all
-result sets that are floating arround. This is especially true if you
+result sets that are floating around. This is especially true if you
 want to select result sets according to the metadata as input
 parameters for other experiments.
 
@@ -19,7 +19,7 @@ parsed (from the command line)::
 
    inputs = {
        "arch": String("x86"),
-        
+
         # Here come computed arguments
         "inference_s390": lambda self:\
               search_experiment(InferenceResults,
@@ -30,7 +30,7 @@ parsed (from the command line)::
               search_experiment(InferenceResults,
                               search_path_go_up_till(self.base_directory, "data"),
                               {'arch': self.arch.value}),
-   } 
+   }
 
 Here two inputs are computed. inference_s390 is calulated dynamically,
 but isn't dependent on any other input parameter. The result set is

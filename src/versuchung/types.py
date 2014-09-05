@@ -309,7 +309,7 @@ class List(InputParameter, Type, list):
     than one command-line argument. There you can replace the name
     prefix with a colon. For example if you want to give a list of two
     :class:`~versuchung.archives.GitArchive` instances use the input
-    definition ``"git": List(GitArchive)`` togehter with the command line::
+    definition ``"git": List(GitArchive)`` together with the command line::
 
        --git ":clone-url /path/to/git1" --git ":clone-url /path/to/git2"
 

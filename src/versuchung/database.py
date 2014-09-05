@@ -322,7 +322,7 @@ class Table(InputParameter, OutputParameter, Type):
 
     A versuchung table is a table that is aware of experiments. It
     stores for each dataset the experiment it originates from. The
-    field list consits either of plain strings, then the column type
+    field list consists either of plain strings, then the column type
     is text. If it's a tuple the first entry is the name and the second its type::
 
     >>> [("foo", "integer"), "barfoo"]
@@ -332,7 +332,7 @@ class Table(InputParameter, OutputParameter, Type):
     default sqlite database named ``sqlite3.db``
 
     To make a set of field the index keys (UNIQUE), give it as a list
-    of string as keys argument. The conflict_stragety gives the SQL
+    of string as keys argument. The conflict_strategy gives the SQL
     strategy what to do on conflict. If you want to merge databases from
     multiple experiments without triggering a conflict if the given key
     set is equal (i.e., if you want the same values in the columns given

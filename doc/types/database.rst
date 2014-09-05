@@ -3,7 +3,7 @@ Database Output
 
 Similar to the :doc:`tex`, you can use a real relational database as a
 backend to hold your data. Databases and tables within those databases
-can be used as well as output, and as input parameters. There are
+can be used output, as well as input parameters. There are
 different helpers that make it easy to insert data into those
 databases. When data is inserted into a database the data strictly
 connected with the run experiment. This makes it at all points clear,

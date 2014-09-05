@@ -8,32 +8,32 @@ As a quick start a simple experiment with input and output parameters is show::
     from versuchung.experiment import Experiment
     from versuchung.types import String
     from versuchung.files import File
-    
+
     class SimpleExperiment(Experiment):
         inputs = {"input_key": String("default key"),
                   "input_value": String("default value")}
         outputs = {"output_file": File("output")}
-    
+
         def run(self):
             # Combine the input parameters
             content = self.inputs.input_key.value \
                 + ": " + self.inputs.input_value.value
-    
+
             # write the result to the output file
             self.outputs.output_file.value = content + "\n"
-    
-    
+
+
     if __name__ == "__main__":
         import sys
         experiment = SimpleExperiment()
         dirname = experiment(sys.argv)
-    
+
         print dirname
 
 
 This experiment is put in a single python script file. It is a
 complete experiment and a runnable python script with a command line
-parser to override the default experiment input parameters. 
+parser to override the default experiment input parameters.
 
 Every experiment inherits from the
 :class:`~versuchung.experiment.Experiment` class to gain the basic
@@ -51,11 +51,11 @@ output parameter ``"output_file"`` which is of type
 in the experiment output there will be a file called *output*.
 
 The :meth:`~versuchung.experiment.Experiment.run` method is the
-hearth of every experiment. It is called when all input parameters are
-gathered and experiment enviroment is set up. In this
+heart of every experiment. It is called when all input parameters are
+gathered and the experiment environment is set up. In this
 ``SimpleExperiment`` the input parameters are simply concatenated and
 written to the output file. This ``SimpleExperiment`` can be
-instantiacted without arguments. The resulting object is called with
+instantiated without arguments. The resulting object is called with
 the command line parameters to enable a command line interface.
 
 Calling ``python experiment.py --help`` gives::
@@ -74,7 +74,7 @@ Calling ``python experiment.py --help`` gives::
       --input_value=INPUT_VALUE
                             (default: default value)
     
-As you can see the two input parameters can be overriden on the
+As you can see the two input parameters can be overwritten on the
 command line. The experiment can be executed by ``python
 experiment.py`` and print on the console::
 

@@ -121,7 +121,7 @@ class TarArchive(Type, InputParameter, Directory_op_with):
 class GitArchive(InputParameter, Type, Directory_op_with):
     """Can be used as: **input parameter**
 
-    The in ``clone_url`` given git repository will be cloned to a
+    The git repository given in ``clone_url`` will be cloned to a
     temporary directory. It will be removed after the experiment is
     over. If ``shallow == True`` Only the files and not the .git is
     copied (cloned). This is especially useful for large git
@@ -242,7 +242,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
 
     @property
     def value(self):
-        """Return a vamos.files.Directory instance to the cloned git directory"""
+        """Return a :class:`versuchung.files.Directory` instance to the cloned git directory"""
         if not self.__value:
             self.__value = self.__setup_value()
         return self.__value

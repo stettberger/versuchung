@@ -214,7 +214,7 @@ class Directory(FilesystemObject, Directory_op_with):
     """Can be used as: **input parameter** and **output parameter**
 
     Represents the contents of directory. It can also be used with the
-    **with**-keyword to change the directory temporarily to this
+    **with**-keyword to change the current working directory temporarily to this
     directory::
 
        with directory as dir:

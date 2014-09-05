@@ -1,4 +1,4 @@
-Various handy tools for experimentation
+Various Handy Tools for Experimentation
 ***************************************
 
 .. automodule:: versuchung.execute

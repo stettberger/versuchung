@@ -111,7 +111,7 @@ class Experiment(Type, InputParameter):
         pass
 
     def __init__(self, default_experiment_instance = None):
-        """The constructor of an experiment just filles in the
+        """The constructor of an experiment just fills in the
         necessary attributes but has *no* sideeffects on the outside
         world.
 
@@ -414,7 +414,7 @@ class Experiment(Type, InputParameter):
     def metadata(self):
         """Return the metadata as python dict. This works for
         experiments, which are running at the moment, and for already
-        run experiments by reading the /metadata file."""
+        finished experiments by reading the /metadata file."""
         if not self.__metadata:
             md_path = os.path.join(self.base_directory, "metadata")
             with open(md_path) as fd:
@@ -427,7 +427,7 @@ class Experiment(Type, InputParameter):
         return self.base_directory
 
     def run(self):
-        """This method is the hearth of every experiment and must be
+        """This method is the heart of every experiment and must be
         implemented by the user. It is called when the experiment is
         executed. Before all input parameters are parsed, the output
         directory is set up. Afterwards all temporary data is removed
