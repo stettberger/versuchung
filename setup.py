@@ -27,7 +27,7 @@ cmdclass["test"] = TestCommand
 
 version_info = {
     'name': 'versuchung',
-    'version': '1.0',
+    'version': '1.1',
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
