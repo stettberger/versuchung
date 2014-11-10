@@ -14,7 +14,6 @@
 
 
 from versuchung.types import InputParameter, OutputParameter, Type
-from versuchung.tools import before
 from cStringIO import StringIO
 import shutil
 import csv
@@ -121,7 +120,7 @@ class File(FilesystemObject):
 
     def flush(self):
         """Flush the cached content of the file to disk"""
-        if not self.__value:
+        if self.__value == None:
             return
         with open(self.path, "w+") as fd:
             v = self.before_write(self.value)
@@ -228,12 +227,9 @@ class Directory(FilesystemObject, Directory_op_with):
         self.__value = None
         self.__new_files = []
 
-    def ___ensure_dir_exists(self):
+    def __ensure_dir_exists(self):
         if not os.path.exists(self.path):
             os.mkdir(self.path)
-
-    # Ensure dir exists DECORATOR
-    __ensure_dir_exists = before(___ensure_dir_exists)
 
     @property
     def value(self):
@@ -259,22 +255,23 @@ class Directory(FilesystemObject, Directory_op_with):
     def before_experiment_run(self, parameter_type):
         FilesystemObject.before_experiment_run(self, parameter_type)
         if parameter_type == "output":
-            self.___ensure_dir_exists()
+            self.__ensure_dir_exists()
 
-    @__ensure_dir_exists
     def new_file(self, name):
         """Generate a new :class:`~versuchung.files.File` in the
         directory. It will be flushed automatically if the experiment
         is over."""
+        self.__ensure_dir_exists()
         f = File(name)
         f.set_path(self.path, name)
+        f.value = ""
         self.subobjects[name] = f
         return f
 
-    @__ensure_dir_exists
     def new_directory(self, name):
         """Generate a new :class:`~versuchung.files.Directory` in the
         directory. The directory <name> must not be present before"""
+        self.__ensure_dir_exists()
         f = Directory(name)
         f.set_path(self.path, name)
         os.mkdir(f.path)
@@ -282,7 +279,6 @@ class Directory(FilesystemObject, Directory_op_with):
         return f
 
 
-    @__ensure_dir_exists
     def mirror_directory(self, path, include_closure = None):
         """Copies the contents of the given directory to this
         directory.
@@ -290,6 +286,8 @@ class Directory(FilesystemObject, Directory_op_with):
         The include closure is a function, which checks for every
         (absolute) path in the origin directory, if it is mirrored. If
         it is None, all files are included."""
+
+        self.__ensure_dir_exists()
 
         if not include_closure:
             include_closure = lambda arg: True
