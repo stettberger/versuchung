@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
 import os
 import csv
 from  cStringIO import StringIO
@@ -29,7 +31,7 @@ class SubObjects(dict):
         self.update()
     def update(self):
         if not "parent" in dir(self) and len(self) > 0:
-            print "You probably used python multiprocessing, this might break horrible"
+            print("You probably used python multiprocessing, this might break horrible")
             return
         for name, obj in self.items():
             if self.parent.name != None:

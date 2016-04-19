@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from distutils.core import setup
 from distutils.cmd import Command
 from distutils.spawn import spawn
@@ -8,7 +10,7 @@ try:
     from sphinx.setup_command import BuildDoc
     cmdclass = {'doc': BuildDoc}
 except:
-    print "No Sphinx installed (python-sphinx) so no documentation can be build"
+    print("No Sphinx installed (python-sphinx) so no documentation can be build")
     cmdclass = {}
 
 

@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 
 from optparse import OptionParser
 import datetime
@@ -149,13 +150,13 @@ class Experiment(Type, InputParameter):
             if type(inp) == LambdaType:
                 continue
             if not isinstance(inp, InputParameter):
-                print "%s cannot be used as an input parameter" % name
+                print("%s cannot be used as an input parameter" % name)
                 sys.exit(-1)
             self.subobjects[name] = inp
 
         for (name, outp) in self.outputs.items():
             if not isinstance(outp, OutputParameter):
-                print "%s cannot be used as an output parameter" % name
+                print("%s cannot be used as an output parameter" % name)
                 sys.exit(-1)
             self.subobjects[name] = outp
 
@@ -219,7 +220,7 @@ class Experiment(Type, InputParameter):
         if self.__opts.do_list:
             for experiment in os.listdir(self.base_directory):
                 if experiment.startswith(self.title):
-                    print "EXP", experiment
+                    print("EXP", experiment)
                     self.__do_list(self.__class__(experiment))
             return None
 
@@ -236,7 +237,7 @@ class Experiment(Type, InputParameter):
         except:
             # Clean up the tmp directory
             if self.suspend_on_error:
-                print "tmp-dir: %s" % self.tmp_directory.path
+                print("tmp-dir: %s" % self.tmp_directory.path)
                 self.suspend_python()
             logging.error("Removing tmp directory")
             shutil.rmtree(self.tmp_directory.path)
@@ -269,8 +270,8 @@ class Experiment(Type, InputParameter):
             content = fd.read()
         d = eval(content)
         content = experiment.__experiment_instance + "\n" + content
-        print "+%s%s" % ("-" * indent,
-                        content.strip().replace("\n", "\n|" + (" " * (indent+1))))
+        print("+%s%s" % ("-" * indent,
+                        content.strip().replace("\n", "\n|" + (" " * (indent+1)))))
         for dirname in d.values():
             if type(dirname) != type(""):
                 continue
@@ -393,7 +394,7 @@ class Experiment(Type, InputParameter):
     def inp_extract_cmdline_parser(self, opts, args):
         self.__experiment_instance = self.inp_parser_extract(opts, None)
         if not self.__experiment_instance:
-            print "Missing argument for %s" % self.title
+            print("Missing argument for %s" % self.title)
             raise ExperimentError
 
         # Resolve symlink relative to the current directory

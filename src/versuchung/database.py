@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
 from versuchung.types import Type, InputParameter, OutputParameter
 import logging
 import sqlite3
@@ -91,7 +93,7 @@ class Database_MySQL(InputParameter, OutputParameter, Type, Database_Abstract):
         directory = self.tmp_directory.new_directory(self.name)
         path = os.path.join(directory.path, "my.cnf")
         logging.debug("MYSQL_HOME=%s", path)
-        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, 0600), 'w') as handle:
+        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as handle:
             handle.write("""[client]
 host=%s
 user=%s
@@ -483,7 +485,7 @@ class TableDict(Table, dict):
 class Database_SQlite_Merger:
     def log(self, msg, *args):
         if self.logging:
-            print "merger: " + (msg % args)
+            print("merger: " + (msg % args))
 
     def __init__(self, target_path, source_paths = [], logging = True):
         self.target_path = target_path
@@ -574,8 +576,8 @@ class Database_SQlite_Merger:
 if __name__ == '__main__':
     import sys
     if len(sys.argv) < 2:
-        print sys.argv[0] + " <target-database-file> [<source-db1> <source-db2> ...]"
-        print " -- merges different versuchung sqlite databases into a single one"
+        print(sys.argv[0] + " <target-database-file> [<source-db1> <source-db2> ...]")
+        print(" -- merges different versuchung sqlite databases into a single one")
         sys.exit(-1)
 
     merger = Database_SQlite_Merger(sys.argv[1], sys.argv[2:])
