@@ -321,10 +321,10 @@ class Experiment(Type, InputParameter):
         for name in self.inputs:
             metadata.update( self.inputs[name].inp_metadata() )
         m = hashlib.md5()
-        m.update("version %s" % str(self.version))
+        m.update(("version %s" % str(self.version)).encode())
         calc_metadata = self.filter_metadata(metadata)
         for key in sorted(calc_metadata.keys()):
-            m.update(key + " " + str(calc_metadata[key]))
+            m.update((key + " " + str(calc_metadata[key])).encode())
 
         self.__experiment_instance = "%s-%s" %(self.title, m.hexdigest())
         self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
