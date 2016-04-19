@@ -16,7 +16,10 @@ from __future__ import print_function
 
 import os
 import csv
-from  cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 from optparse import OptionParser
 import copy
 

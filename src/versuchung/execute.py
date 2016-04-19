@@ -17,7 +17,10 @@ from versuchung.files import CSV_File
 import logging
 import os
 import resource
-import thread
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 import time
 import pipes
 from versuchung.tools import AdviceManager, Advice

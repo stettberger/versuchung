@@ -14,7 +14,10 @@
 
 
 from versuchung.types import InputParameter, OutputParameter, Type
-from cStringIO import StringIO
+try:
+        from cStringIO import StringIO
+except ImportError:
+        from io import StringIO
 import shutil
 import csv
 import os, stat
