@@ -169,7 +169,7 @@ class Experiment(Type, InputParameter):
                                  help="list all experiment results")
         self.__parser.add_option('-s', '--symlink', dest='do_symlink', action='store_true',
                                  help="symlink the result dir (as newest)")
-        self.__parser.add_option('-v', '--verbose', dest='verbose', action='count',
+        self.__parser.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
                                  help="increase verbosity (specify multiple times for more)")
 
         for (name, inp) in self.inputs.items():
