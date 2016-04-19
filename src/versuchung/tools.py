@@ -70,9 +70,9 @@ class AdviceManager(Singleton):
     @staticmethod
     def advicable(func):
         """Decorator to mark a function as advicable"""
-        if not "func_name" in dir(func):
+        if not "__call__" in dir(func):
             raise ValueError("No function adviced")
-        full_name = "%s.%s" % (func.__module__, func.func_name)
+        full_name = "%s.%s" % (func.__module__, func.__name__)
 
         self = AdviceManager()
 
