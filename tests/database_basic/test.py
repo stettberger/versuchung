@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 from versuchung.database   import Database, TableDict, Table
 import os
@@ -44,5 +46,5 @@ if __name__ == "__main__":
 
     if r2:
         shutil.rmtree(r2)
-    print "success"
+    print("success")
 

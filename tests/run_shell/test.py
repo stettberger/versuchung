@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 from versuchung.execute import shell, shell_failok, CommandFailed
 
@@ -27,6 +29,6 @@ if __name__ == "__main__":
     import shutil
     experiment = ShellExperiment()
     dirname = experiment(sys.argv)
-    print "success"
+    print("success")
     if dirname:
         shutil.rmtree(dirname)

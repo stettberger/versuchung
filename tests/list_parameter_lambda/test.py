@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 from versuchung.types import String, List
 from versuchung.files import File
@@ -57,4 +59,4 @@ if __name__ == "__main__":
 
     for dirname in dirs_to_del:
         shutil.rmtree(dirname)
-    print "success"
+    print("success")

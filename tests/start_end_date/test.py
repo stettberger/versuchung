@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 import time
 class SimpleExperiment(Experiment):
@@ -13,4 +15,4 @@ if __name__ == "__main__":
 
     if dirname:
         shutil.rmtree(dirname)
-    print "success"
+    print("success")

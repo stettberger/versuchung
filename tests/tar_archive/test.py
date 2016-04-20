@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 from versuchung.archives import TarArchive
 
@@ -12,7 +14,7 @@ class TarArchiveText(Experiment):
         assert len(directory.value) == 2
         assert "ABC" in directory.value
         assert "Hallo" in directory.value
-        print "success"
+        print("success")
 
 
 if __name__ == "__main__":

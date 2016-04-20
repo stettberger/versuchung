@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 from versuchung.archives import TarArchive, GitArchive
 import os
@@ -20,7 +22,7 @@ class GitArchiveTest(Experiment):
             assert path == self.i.git.value.path
             assert os.path.abspath(os.curdir) == path
 
-        print "success"
+        print("success")
 
 
 if __name__ == "__main__":
