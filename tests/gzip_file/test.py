@@ -21,7 +21,7 @@ if __name__ == "__main__":
     experiment = SimpleExperiment()
     dirname = experiment(sys.argv)
 
-    assert len(open(experiment.gz_out.path).read()) > 0
+    assert len(open(experiment.gz_out.path, 'rb').read()) > 0
 
     if dirname:
         shutil.rmtree(dirname)
