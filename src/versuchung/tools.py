@@ -13,6 +13,7 @@
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import sys
 from functools import wraps
 
 class JavascriptStyleDictAccess(dict):
@@ -131,13 +132,22 @@ class Advice:
         if self.enabled:
             return
         # Hook only in if the methods are overwritten
-        if self.before.im_func != Advice.before.im_func:
-            am.before[self.method].append(self.before)
-        if self.around.im_func != Advice.around.im_func:
-            am.around[self.method].append(self.around)
-        if self.after.im_func != Advice.after.im_func:
-            am.after[self.method].append(self.after)
-        self.enabled = True
+        if sys.version_info[0] == 2:
+            if self.before.im_func != Advice.before.im_func:
+                am.before[self.method].append(self.before)
+            if self.around.im_func != Advice.around.im_func:
+                am.around[self.method].append(self.around)
+            if self.after.im_func != Advice.after.im_func:
+                am.after[self.method].append(self.after)
+            self.enabled = True
+        elif sys.version_info[0] == 3:
+            if self.before.__func__ != Advice.before:
+                am.before[self.method].append(self.before)
+            if self.around.__func__ != Advice.around:
+                am.around[self.method].append(self.around)
+            if self.after.__func__ != Advice.after:
+                am.after[self.method].append(self.after)
+            self.enabled = True
 
     def before(self, args, kwargs):
         return (args, kwargs)
