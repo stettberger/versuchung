@@ -71,7 +71,7 @@ def __shell(failok, command, *args):
     command = command % args
 
     logging.debug("executing: " + command)
-    p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
+    p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True, universal_newlines=True)
     stdout = ""
     while True:
         x = p.stdout.readline()
