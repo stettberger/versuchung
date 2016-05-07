@@ -190,7 +190,7 @@ class Executable(File):
         raise NotImplementedError
 
     def inp_metadata(self):
-        return {self.name + "-md5": hashlib.md5(open(self.path).read()).hexdigest()}
+        return {self.name + "-md5": hashlib.md5(open(self.path, "rb").read()).hexdigest()}
 
     def execute(self, cmdline, *args):
         """Does start the executable with meth:`versuchung.execute.shell` and
