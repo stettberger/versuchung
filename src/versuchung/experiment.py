@@ -140,6 +140,7 @@ class Experiment(Type, InputParameter):
         if default_experiment_instance != None:
             self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
             self.base_directory = os.path.realpath(self.base_directory)
+            assert os.path.exists(self.base_directory)
         else:
             self.base_directory = os.path.realpath(os.curdir)
 
@@ -402,6 +403,7 @@ class Experiment(Type, InputParameter):
 
         self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
         self.base_directory = os.path.realpath(self.base_directory)
+        assert os.path.exists(self.base_directory)
 
         for (name, outp) in self.outputs.items():
             del self.subobjects[name]
