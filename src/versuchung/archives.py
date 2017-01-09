@@ -78,7 +78,7 @@ class TarArchive(Type, InputParameter, Directory_op_with):
 
         extract_mode = ""
         if "tar.gz" in fn or "tgz" in fn:
-            extract_mode = "x"
+            extract_mode = "z"
         if "tar.bz2" in fn or "bzip2" in fn:
             extract_mode = "j"
         if "tar.xz" in fn or "txz" in fn:
@@ -92,7 +92,7 @@ class TarArchive(Type, InputParameter, Directory_op_with):
                 pass
             with Directory(self.name) as d2:
                 dirname = os.path.abspath(".")
-                (out, ret) = shell("tar %szvf %s", extract_mode, fn)
+                (out, ret) = shell("tar %sxvf %s", extract_mode, fn)
                 if ret != 0:
                     raise RuntimeError("Extracting of %s failed" % fn)
 
