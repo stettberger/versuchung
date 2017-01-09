@@ -81,6 +81,8 @@ class TarArchive(Type, InputParameter, Directory_op_with):
             extract_mode = "x"
         if "tar.bz2" in fn or "bzip2" in fn:
             extract_mode = "j"
+        if "tar.xz" in fn or "txz" in fn:
+            extract_mode = "J"
 
         with self.tmp_directory as d:
             try:
