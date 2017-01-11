@@ -166,6 +166,9 @@ class Experiment(Type, InputParameter):
         self.__parser.add_option('-d', '--base-dir', dest='base_dir', action='store',
                                  help="Directory which is used for storing the experiment data",
                                  default = ".")
+        self.__parser.add_option('--dummy', dest='dummy_result', action='store_true',
+                                 help="Use dummy result directory",
+                                 default=False)
         self.__parser.add_option('-l', '--list', dest='do_list', action='store_true',
                                  help="list all experiment results")
         self.__parser.add_option('-s', '--symlink', dest='do_symlink', action='store_true',
@@ -334,8 +337,13 @@ class Experiment(Type, InputParameter):
             m.update((key + " " + str(calc_metadata[key])).encode())
 
         self.__experiment_instance = "%s-%s" %(self.title, m.hexdigest())
-        self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
+        if self.__opts.dummy_result:
+            base = self.tmp_directory.path
+        else:
+            base = self.__opts.base_dir
+        self.base_directory = os.path.join(base, self.__experiment_instance)
         self.base_directory = os.path.realpath(self.base_directory)
+
 
         if os.path.exists(self.base_directory):
             logging.info("Removing all files from existing output directory")
@@ -363,6 +371,14 @@ class Experiment(Type, InputParameter):
 
         self.__metadata = metadata
 
+
+    def symlink_name(self):
+        """If -s is given, this function returns the name of the symlink
+           object that is created in the base directory.
+
+        """
+        return self.title
+
     def after_experiment_run(self, parameter_type):
 
         if parameter_type == "output":
@@ -379,9 +395,13 @@ class Experiment(Type, InputParameter):
 
             shutil.rmtree(self.tmp_directory.path)
 
-            # Create a Symlink to the newsest result set
-            if self.__opts.do_symlink:
-                link = self.title
+            # Create a Symlink to the newsest result set, if it is not
+            # already removed (--dummy)
+            if self.__opts.do_symlink and os.path.exists(self.base_directory):
+                link = os.path.join(self.base_directory,
+                                    "..",
+                                    self.symlink_name())
+                link = os.path.abspath(link)
                 if os.path.islink(link):
                     os.unlink(link)
 
