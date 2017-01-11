@@ -4,6 +4,9 @@ from versuchung.experiment import Experiment
 from versuchung.execute import shell, shell_failok, CommandFailed
 
 import sys
+import os
+
+experiment_file = os.path.abspath(__file__)
 
 class ShellExperiment(Experiment):
     def run(self):
@@ -23,7 +26,7 @@ class ShellExperiment(Experiment):
 
         assert (['2 23'], 0) == shell("echo %(foo)s %(bar)s", {"foo": "2", "bar": "23"})
 
-        shell("cat %s", __file__)
+        shell("cat %s", experiment_file)
 
 if __name__ == "__main__":
     import shutil

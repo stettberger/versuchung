@@ -1,14 +1,14 @@
 # This file is part of versuchung.
-# 
+#
 # versuchung is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # versuchung is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -212,7 +212,6 @@ class Experiment(Type, InputParameter):
         # Set up the argument parsing
         self.__setup_parser()
         (opts, args) = self.__parser.parse_args(args)
-        os.chdir(opts.base_dir)
         setup_logging(opts.verbose)
 
         self.__opts = opts
@@ -233,16 +232,23 @@ class Experiment(Type, InputParameter):
         # Set up the experiment
         self.before_experiment_run("output")
 
+        # Goto the output directory
+        curpath = os.path.abspath(os.curdir)
+        os.chdir(self.base_directory)
+
         try:
             self.run()
-        except:
+        except RuntimeError as e:
             # Clean up the tmp directory
             if self.suspend_on_error:
+                print(str(e))
                 print("tmp-dir: %s" % self.tmp_directory.path)
                 self.suspend_python()
             logging.error("Removing tmp directory")
             shutil.rmtree(self.tmp_directory.path)
-            raise
+            raise e
+        finally:
+            os.chdir(curpath)
 
         # Tear down the experiment
         self.after_experiment_run("output")
@@ -399,12 +405,13 @@ class Experiment(Type, InputParameter):
             raise ExperimentError
 
         # Resolve symlink relative to the current directory
-        self.__experiment_instance = os.path.realpath(self.__experiment_instance)
-        self.__experiment_instance = self.__experiment_instance[len(os.path.realpath(os.curdir))+1:]
+        path = os.path.realpath(self.__experiment_instance)
+        path = os.path.abspath(path)
+        self.__experiment_instance = os.path.basename(path)
 
-        self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
-        self.base_directory = os.path.realpath(self.base_directory)
-        assert os.path.exists(self.base_directory)
+        self.base_directory = path
+        assert os.path.exists(self.base_directory), \
+            "Base Directory does not exist"
 
         for (name, outp) in self.outputs.items():
             del self.subobjects[name]
@@ -473,8 +480,7 @@ class Experiment(Type, InputParameter):
              return inp
          elif outp != None:
              return outp
-         
+
          raise AttributeError("'%s' object has no attribute '%s'" %(\
              self.__class__.__name__,
              name))
-
