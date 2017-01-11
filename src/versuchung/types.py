@@ -377,14 +377,15 @@ class List(InputParameter, Type, list):
             subtype.inp_setup_cmdline_parser(subtype_parser)
 
             if not ":" in arg:
-                arg = ": " + arg
+                (opts, args) = subtype_parser.parse_args(["--" + subtype.name, arg])
 
-            arg = arg.replace(": ", "--" + subtype.name + " ")
-            arg = arg.replace(":", "--" + subtype.name + "-")
+            else:
+                arg = arg.replace(": ", "--" + subtype.name + " ")
+                arg = arg.replace(":", "--" + subtype.name + "-")
 
-            arg = shlex.split(arg)
+                arg = shlex.split(arg)
+                (opts, args) = subtype_parser.parse_args(arg)
 
-            (opts, args) = subtype_parser.parse_args(arg)
             subtype.inp_extract_cmdline_parser(opts,args)
             self.append(subtype)
 
