@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 from versuchung.execute import shell, MachineMonitor
 
@@ -14,10 +16,10 @@ if __name__ == "__main__":
     try:
         import psutil
         if not "phymem_usage" in dir(psutil):
-            print "skipped"
+            print("skipped")
             sys.exit(0)
     except:
-        print "skipped"
+        print("skipped")
         sys.exit(0)
 
     experiment = SimpleExperiment()
@@ -25,4 +27,4 @@ if __name__ == "__main__":
 
     if dirname:
         shutil.rmtree(dirname)
-    print "success"
+    print("success")

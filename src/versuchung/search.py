@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
 import os
 import logging
 
@@ -109,8 +111,8 @@ if __name__ == '__main__':
     import sys
     from versuchung.experiment import Experiment
     if len(sys.argv) != 4:
-        print "%s <experiment-type> <field> <data>" % sys.argv[0]
+        print("%s <experiment-type> <field> <data>" % sys.argv[0])
         sys.exit(-1)
     Experiment.__name__ = sys.argv[1]
     for exp in search_experiment_results(Experiment, ".", {sys.argv[2]: sys.argv[3]}):
-        print exp.path
+        print(exp.path)

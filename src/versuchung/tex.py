@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+
 from versuchung.files import File
 import re
 import os
@@ -158,4 +160,4 @@ class DatarefDict(PgfKeyDict):
 
 if __name__ == '__main__':
     import sys
-    print PgfKeyDict(sys.argv[1])
+    print(PgfKeyDict(sys.argv[1]))

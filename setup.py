@@ -1,21 +1,25 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from distutils.core import setup
 from distutils.cmd import Command
 from distutils.spawn import spawn
+
+import sys
 
 try:
     from sphinx.setup_command import BuildDoc
     cmdclass = {'doc': BuildDoc}
 except:
-    print "No Sphinx installed (python-sphinx) so no documentation can be build"
+    print("No Sphinx installed (python-sphinx) so no documentation can be build")
     cmdclass = {}
 
 
 class TestCommand(Command):
     user_options = []
     def run(self):
-        spawn(["make", "-C", "tests"], verbose = 1)
+        spawn(["make", "-C", "tests", "PYTHON=%s" % (sys.executable,)], verbose = 1)
 
     def initialize_options(self):
         pass

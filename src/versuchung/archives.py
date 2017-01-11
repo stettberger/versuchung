@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 
 from versuchung.types import Type, InputParameter
 from versuchung.files import Directory, Directory_op_with, File
@@ -185,7 +186,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
 
             (lines, ret) = shell(cmd)
             if ret != 0 or lines == 0:
-                print "\n".join(lines)
+                print("\n".join(lines))
                 sys.exit(-1)
 
             self.__hash = lines[0].split("\t")[0]
@@ -227,7 +228,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             (lines, ret) = shell(cmd, *args)
 
             if ret != 0:
-                print "\n".join(lines)
+                print("\n".join(lines))
                 sys.exit(-1)
 
             if not self.__shallow:
@@ -236,7 +237,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
                 (lines, ret) = shell(cmd, *args)
 
                 if ret != 0:
-                    print "\n".join(lines)
+                    print("\n".join(lines))
                     sys.exit(-1)
 
 

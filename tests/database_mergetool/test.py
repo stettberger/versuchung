@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 from versuchung.types      import Integer
 from versuchung.database   import Database, TableDict, Table, Database_SQlite_Merger
@@ -95,5 +97,5 @@ if __name__ == "__main__":
 
     os.unlink("output.db")
 
-    print "success"
+    print("success")
 

@@ -17,7 +17,10 @@ from versuchung.files import CSV_File
 import logging
 import os
 import resource
-import thread
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 import time
 import pipes
 from versuchung.tools import AdviceManager, Advice
@@ -68,7 +71,7 @@ def __shell(failok, command, *args):
     command = command % args
 
     logging.debug("executing: " + command)
-    p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True)
+    p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True, universal_newlines=True)
     stdout = ""
     while True:
         x = p.stdout.readline()

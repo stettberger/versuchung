@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from versuchung.experiment import Experiment
 from versuchung.tex import *
 
@@ -40,4 +42,4 @@ if __name__ == "__main__":
     assert dref["foobar"] == "42"
 
     shutil.rmtree(dirname)
-    print "success"
+    print("success")
