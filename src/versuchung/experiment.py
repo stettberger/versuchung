@@ -236,7 +236,7 @@ class Experiment(Type, InputParameter):
         self.before_experiment_run("output")
 
         # Goto the output directory
-        curpath = os.path.abspath(os.curdir)
+        self.startup_directory = os.path.abspath(os.curdir)
         os.chdir(self.base_directory)
 
         try:
@@ -251,7 +251,7 @@ class Experiment(Type, InputParameter):
             shutil.rmtree(self.tmp_directory.path)
             raise e
         finally:
-            os.chdir(curpath)
+            os.chdir(self.startup_directory)
 
         # Tear down the experiment
         self.after_experiment_run("output")

@@ -1,14 +1,14 @@
 # This file is part of versuchung.
-# 
+#
 # versuchung is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # versuchung is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -22,20 +22,24 @@ except ImportError:
     from io import StringIO
 from optparse import OptionParser
 import copy
+import glob
 
 class SubObjects(dict):
     def __init__(self, type_object):
         dict.__init__(self)
         self.parent = type_object
+
     def __setitem__(self, key, value):
         assert not key in self or self[key] == value, "Duplicated object name: %s = %s" % (key, value)
         dict.__setitem__(self, key, value)
         value.parent_object = self.parent
         self.update()
+
     def update(self):
         if not "parent" in dir(self) and len(self) > 0:
             print("You probably used python multiprocessing, this might break horrible")
             return
+
         for name, obj in self.items():
             if self.parent.name != None:
                 obj.name = "%s-%s" % (self.parent.name, name)
@@ -373,7 +377,13 @@ class List(InputParameter, Type, list):
             args = [x for x in args if type(x) != self.datatype]
 
         count = 0
-        for arg in args:
+        while len(args) > 0:
+            arg = args.pop(0)
+            if hasattr(self.datatype, "path") and not os.path.exists(arg):
+                args = glob.glob(arg) + args
+                # Remove duplicated items caused by symlinks
+                args = list(set([os.path.realpath(x) for x in args]))
+                continue
             # Create Subtype and initialize its parser
             subtype = self.datatype()
             self.subobjects["%d" % count] = subtype
@@ -382,16 +392,15 @@ class List(InputParameter, Type, list):
             subtype.inp_setup_cmdline_parser(subtype_parser)
 
             if not ":" in arg:
-                (opts, args) = subtype_parser.parse_args(["--" + subtype.name, arg])
-
+                (opts, sub_args) = subtype_parser.parse_args(["--" + subtype.name, arg])
             else:
                 arg = arg.replace(": ", "--" + subtype.name + " ")
                 arg = arg.replace(":", "--" + subtype.name + "-")
 
                 arg = shlex.split(arg)
-                (opts, args) = subtype_parser.parse_args(arg)
+                (opts, sub_args) = subtype_parser.parse_args(arg)
 
-            subtype.inp_extract_cmdline_parser(opts,args)
+            subtype.inp_extract_cmdline_parser(opts,sub_args)
             self.append(subtype)
 
     def inp_metadata(self):
@@ -405,4 +414,3 @@ class List(InputParameter, Type, list):
         """Returns the object (which behaves like a list) itself. This
         is only implemented for a coherent API."""
         return self
-
