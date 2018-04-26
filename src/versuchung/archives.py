@@ -1,14 +1,14 @@
 # This file is part of versuchung.
-# 
+#
 # versuchung is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # versuchung is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -261,17 +261,9 @@ class GzipFile(File):
         return self.__original_filename
 
     @property
-    def path(self):
-        path = File.path.fget(self)
-        if self.parameter_type == "input" and not os.path.exists(path):
-            shell("gunzip < %s > %s", self.__original_filename,
-                  path)
-        return path
-
-    @property
     def value(self):
         path = File.path.fget(self)
-        if self.parameter_type == "input" and not os.path.exists(path):
+        if self.parameter_type == "input" and not os.path.exists(path) and os.path.exists(self.__original_filename):
             shell("gunzip < %s > %s", self.__original_filename,
                   path)
         return File.value.fget(self)
@@ -287,6 +279,7 @@ class GzipFile(File):
             self.subobjects["filename"] = File(self.__original_filename)
             filename = self.name + "_" + os.path.basename(self.path.rstrip(".gz"))
             self.set_path(self.tmp_directory.path, filename)
+            _ = self.value # Unzip the file into temporary variable
 
         File.before_experiment_run(self, parameter_type)
 
@@ -295,4 +288,3 @@ class GzipFile(File):
         if parameter_type == "output":
             shell("gzip -c %s > %s.1", self.path, self.path)
             shell("mv %s.1 %s", self.path, self.path)
-
