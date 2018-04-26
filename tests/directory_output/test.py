@@ -7,7 +7,9 @@ import os
 
 class SimpleExperiment(Experiment):
     outputs = {"dir1": Directory("d1"),
-               "dir2": Directory("d2")}
+               "dir2": Directory("d2"),
+               "filtered": Directory(".", filename_filter="*.log"),
+              }
 
     def run(self):
         a = self.o.dir1.new_file("barfoo")
@@ -20,6 +22,15 @@ class SimpleExperiment(Experiment):
         self.o.dir2.mirror_directory(self.o.dir1.path,
                                      lambda x: True)
 
+        a = self.filtered.new_file("foo.log")
+        a.value = "xx"
+        try:
+            a = self.filtered.new_file("bar.xxx")
+            raise Exception("Filter does not work")
+        except RuntimeError as e:
+            pass # Everything is good
+
+
 if __name__ == "__main__":
     import shutil, sys,os
     experiment = SimpleExperiment()
@@ -28,6 +39,9 @@ if __name__ == "__main__":
     assert os.path.isdir(experiment.o.dir2.path + "/tmpdir")
     assert os.path.exists(experiment.o.dir2.path + "/barfoo")
     assert os.path.exists(experiment.o.dir2.path + "/tmpdir/foo")
+
+    assert experiment.filtered.value == Directory(experiment.path, "*.log").value
+    assert os.path.exists(experiment.path + "/foo.log")
 
     if dirname:
         shutil.rmtree(dirname)

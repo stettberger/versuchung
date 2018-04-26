@@ -15,13 +15,14 @@
 
 from versuchung.types import InputParameter, OutputParameter, Type
 try:
-        from cStringIO import StringIO
+    from cStringIO import StringIO
 except ImportError:
-        from io import StringIO
+    from io import StringIO
 import shutil
 import csv
 import os, stat
 import hashlib
+import fnmatch
 
 class FilesystemObject(InputParameter, OutputParameter, Type):
     def __init__(self, default_name=""):
@@ -215,18 +216,29 @@ class Directory_op_with:
 class Directory(FilesystemObject, Directory_op_with):
     """Can be used as: **input parameter** and **output parameter**
 
-    Represents the contents of directory. It can also be used with the
-    **with**-keyword to change the current working directory temporarily to this
-    directory::
+    Represents the contents of directory. The filename_filter is a
+    glob/fnmatch expression to filter the directories content and to
+    ensure that no file is generated that does not fit this pattern.
+    An useful example of this is an output Directory that matches only
+    *.log files and is directly located in the result directory:
+
+       outputs = {
+           "logs": Directory(".", filename_filter="*.log")
+       }
+
+    It can also be used with the **with**-keyword to change the
+    current working directory temporarily to this directory::
 
        with directory as dir:
           # Do something with adjusted current working directory
           print os.curdir
+
     """
 
-    def __init__(self, default_filename=""):
+    def __init__(self, default_filename="", filename_filter="*"):
         FilesystemObject.__init__(self, default_filename)
         Directory_op_with.__init__(self)
+        self.filename_filter = filename_filter
         self.__value = None
         self.__new_files = []
 
@@ -239,11 +251,17 @@ class Directory(FilesystemObject, Directory_op_with):
         """:return: list -- directories and files in given directory"""
         if not self.__value:
             self.__value = os.listdir(self.path)
+            self.__value = [x for x in self.__value
+                            if fnmatch.fnmatch(x, self.filename_filter)]
         return self.__value
 
     def __iter__(self):
         for name in self.value:
             p = os.path.join(self.path, name)
+            if name in self.subobjects:
+                yield self.subobjects[name]
+                continue
+
             if os.path.isdir(p):
                 d = Directory(name)
                 d.set_path(self.path, p)
@@ -264,6 +282,9 @@ class Directory(FilesystemObject, Directory_op_with):
         """Generate a new :class:`~versuchung.files.File` in the
         directory. It will be flushed automatically if the experiment
         is over."""
+        if not fnmatch.fnmatch(name, self.filename_filter):
+            raise RuntimeError("Filename {} does not match filter {}".\
+                                 format(name, self.filename_filter))
         self.__ensure_dir_exists()
         f = File(name)
         f.set_path(self.path, name)
@@ -274,6 +295,9 @@ class Directory(FilesystemObject, Directory_op_with):
     def new_directory(self, name):
         """Generate a new :class:`~versuchung.files.Directory` in the
         directory. The directory <name> must not be present before"""
+        if not fnmatch.fnmatch(name, self.filename_filter):
+            raise RuntimeError("Filename {} does not match filter {}".\
+                                 format(name, self.filename_filter))
         self.__ensure_dir_exists()
         f = Directory(name)
         f.set_path(self.path, name)
