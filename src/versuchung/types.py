@@ -68,6 +68,7 @@ class Type(object):
     def __init__(self):
         # We gather a list of objects that are used by us.
         self.subobjects = SubObjects(self)
+        self.__name = None
 
     def before_experiment_run(self, parameter_type):
         self.parameter_type = parameter_type
@@ -120,6 +121,12 @@ class Type(object):
         experiment reference"""
         assert self.dynamic_experiment, "Type is not used part of a running experiment"
         return self.dynamic_experiment.tmp_directory
+
+    def __repr__(self, value=None):
+        if value:
+            return "<%s %s '%s'>" %(self.__class__.__name__, self.__name, value)
+        return "<%s %s>" %(self.__class__.__name__, self.__name)
+
 
 
 
@@ -196,10 +203,14 @@ class String(InputParameter, Type):
         self.__value = self.inp_parser_extract(opts, None)
 
     def inp_metadata(self):
+
         return {self.name: self.value}
 
     def __str__(self):
         return self.value
+
+    def __repr__(self):
+        return Type.__repr__(self, self.__value)
 
     @property
     def value(self):
@@ -346,7 +357,7 @@ class List(InputParameter, Type, list):
         self.__command_line_parsed = False
 
     def inp_setup_cmdline_parser(self, parser):
-        self.inp_parser_add(parser, None, copy.deepcopy(self.__default_value), action="append",
+        self.inp_parser_add(parser, None, [], action="append",
                             help = "List parameter for type %s" %
                             self.datatype.__name__)
 
@@ -364,18 +375,14 @@ class List(InputParameter, Type, list):
     def inp_extract_cmdline_parser(self, opts, args):
         import shlex
         args = self.inp_parser_extract(opts, None)
-
-        # No argument where given, us the default_values in before_experiment_run
-        if len(args) == len(self.__default_value) and len(args) > 0\
-           and type(args[0]) == type(args[0]) == self.datatype:
-            return
-
         self.__command_line_parsed = True
 
-        if len(args) > len(self.__default_value):
-            args = [x for x in args if type(x) != self.datatype]
+        if not args:
+            for value in self.__default_value:
+                self.subobjects["%d" % len(self)] = value
+        else:
+            self[:] = [] # Remove default values
 
-        count = 0
         while len(args) > 0:
             arg = args.pop(0)
             if hasattr(self.datatype, "path") and not os.path.exists(arg):
@@ -385,8 +392,7 @@ class List(InputParameter, Type, list):
                 continue
             # Create Subtype and initialize its parser
             subtype = self.datatype()
-            self.subobjects["%d" % count] = subtype
-            count += 1
+            self.subobjects["%d" % len(self)] = subtype
             subtype_parser = OptionParser()
             subtype.inp_setup_cmdline_parser(subtype_parser)
 
@@ -400,7 +406,10 @@ class List(InputParameter, Type, list):
                 (opts, sub_args) = subtype_parser.parse_args(arg)
 
             subtype.inp_extract_cmdline_parser(opts,sub_args)
+
             self.append(subtype)
+
+
 
     def inp_metadata(self):
         metadata = {}
@@ -413,3 +422,6 @@ class List(InputParameter, Type, list):
         """Returns the object (which behaves like a list) itself. This
         is only implemented for a coherent API."""
         return self
+
+    def __repr__(self):
+        return Type.__repr__(self, list.__repr__(self))

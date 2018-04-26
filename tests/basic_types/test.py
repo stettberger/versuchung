@@ -14,7 +14,7 @@ class BasicTypesTest(Experiment):
 
         assert str(self.string) == "ABC"
         assert str(self.string) != repr(self.string)
-        assert "<versuchung.types.String" in repr(self.string)
+        assert "<String" in repr(self.string)
         assert "%s" % self.string == "ABC"
         assert self.bool.value == False
 

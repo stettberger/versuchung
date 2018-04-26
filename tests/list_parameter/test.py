@@ -6,7 +6,7 @@ from versuchung.types import String, List
 class SimpleExperiment(Experiment):
     inputs = {"strings": List(String(), default_value=[]),
               "default": List(String, default_value=[String("foo")]),
-              "default2": List(String, default_value=[String("foo")])}
+              "default2": List(String, default_value=[String("fox")])}
 
     def run(self):
         strings = [s.value for s in self.i.strings]
