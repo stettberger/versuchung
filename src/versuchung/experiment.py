@@ -210,6 +210,8 @@ class Experiment(Type, InputParameter):
         >>> experiment.execute(input_parameter="foo")
         """
         self.dynamic_experiment = self
+        self.startup_directory = os.path.abspath(os.curdir)
+
         self.subobjects.update()
 
         # Set up the argument parsing
@@ -236,7 +238,6 @@ class Experiment(Type, InputParameter):
         self.before_experiment_run("output")
 
         # Goto the output directory
-        self.startup_directory = os.path.abspath(os.curdir)
         os.chdir(self.base_directory)
 
         try:

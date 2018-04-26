@@ -1,14 +1,14 @@
 # This file is part of versuchung.
-# 
+#
 # versuchung is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # versuchung is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -16,6 +16,8 @@ from __future__ import print_function
 
 import os
 import logging
+
+from versuchung.types import List
 
 def search_experiment_results(experiment_type, directory, selector = None):
     """In large experiment setups it is hard to keep track of all
@@ -31,7 +33,7 @@ def search_experiment_results(experiment_type, directory, selector = None):
     :func:`search_selector_metadata`.
 
     >>> search_experiment_results(MyExperiment, ".", lambda e: "home" in e.path)
-      [<MyExperiment object at 0xb74805ec>]
+      List(MyExperiment, <MyExperiment object at 0xb74805ec>])
     """
     # Name -> Path
     experiment_map = {}
@@ -54,7 +56,8 @@ def search_experiment_results(experiment_type, directory, selector = None):
                     if exp.path not in [e.path for e in experiment_map.values()]:
                         experiment_map[experiment_name] = exp
 
-    return experiment_map.values()
+    return List(experiment_type, experiment_map.values())
+
 
 def search_experiment(experiment_type, directory, selector = None):
     """Like :func:`search_experiment_results`, but returns only one

@@ -328,17 +328,17 @@ class List(InputParameter, Type, list):
     inherits from ``list``), so it is really easy to iterate over it::
 
       for string in self.inputs.strings:
-          print string.value
+          print(string.value)
 
       for git in self.inputs.git:
           # Clone all given Git Archives
-          print git.path
+          print(git.path)
     """
 
     def __init__(self, datatype, default_value=[]):
         InputParameter.__init__(self)
         Type.__init__(self)
-        list.__init__(self)
+        list.__init__(self, default_value)
         self.__default_value = default_value
         if type(datatype) != type:
             datatype = type(datatype)
@@ -352,12 +352,11 @@ class List(InputParameter, Type, list):
 
 
     def before_experiment_run(self, parameter_type):
-        if parameter_type == "input" and \
-                not self.__command_line_parsed:
+        if parameter_type == "input" and not self.__command_line_parsed:
+            # We were called on the default value. No command line was given
             count = 0
-            for i in self.__default_value:
+            for i in self:
                 self.subobjects["%d" % count] = i
-                self.append(i)
                 count += 1
 
         Type.before_experiment_run(self,parameter_type)
