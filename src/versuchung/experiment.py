@@ -169,8 +169,6 @@ class Experiment(Type, InputParameter):
         self.__parser.add_option('--dummy', dest='dummy_result', action='store_true',
                                  help="Use dummy result directory",
                                  default=False)
-        self.__parser.add_option('-l', '--list', dest='do_list', action='store_true',
-                                 help="list all experiment results")
         self.__parser.add_option('-s', '--symlink', dest='do_symlink', action='store_true',
                                  help="symlink the result dir (as newest)")
         self.__parser.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
@@ -222,13 +220,6 @@ class Experiment(Type, InputParameter):
         self.__opts = opts
         self.__args = args
 
-        if self.__opts.do_list:
-            for experiment in os.listdir(self.base_directory):
-                if experiment.startswith(self.title):
-                    print("EXP", experiment)
-                    self.__do_list(self.__class__(experiment))
-            return None
-
         for key in kwargs:
             if not hasattr(opts, key):
                 raise AttributeError("No argument called %s" % key)
@@ -275,20 +266,6 @@ class Experiment(Type, InputParameter):
         to the terminal. This sends a SIGSTOP to the python process"""
         os.kill(os.getpid(), signal.SIGSTOP)
 
-
-    def __do_list(self, experiment, indent = 0):
-        with open(os.path.join(experiment.base_directory, "metadata")) as fd:
-            content = fd.read()
-        d = eval(content)
-        content = experiment.__experiment_instance + "\n" + content
-        print("+%s%s" % ("-" * indent,
-                        content.strip().replace("\n", "\n|" + (" " * (indent+1)))))
-        for dirname in d.values():
-            if type(dirname) != type(""):
-                continue
-            if os.path.exists(os.path.join(dirname, "metadata")) and \
-               os.path.realpath(dirname) != os.path.realpath(experiment.base_directory):
-                self.__do_list(Experiment(dirname), indent + 3)
 
     def before_experiment_run(self, parameter_type):
         # When experiment run as input, just run the normal input handlers
