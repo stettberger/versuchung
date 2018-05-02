@@ -33,6 +33,9 @@ if __name__ == "__main__":
     e1 = SimpleExperiment()
     r1 = e1([])
 
+    assert SimpleExperiment(r1).output_file.path == e1.output_file.path,\
+        "Default Constructor should set paths correct."
+
     e2 = SimpleExperiment2()
     r2 = e2(se=r1)
 

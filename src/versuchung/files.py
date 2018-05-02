@@ -54,8 +54,14 @@ class FilesystemObject(InputParameter, OutputParameter, Type):
             elif self.parameter_type == "output":
                 assert self.static_experiment == self.dynamic_experiment
                 self.__enclosing_directory = self.dynamic_experiment.base_directory
+            elif self.static_experiment is not None:
+                self.__enclosing_directory = self.static_experiment.base_directory
             else:
                 self.__enclosing_directory = os.path.abspath(os.curdir)
+
+        if os.path.isabs(self.__object_name):
+            return self.__object_name
+
         return os.path.join(self.__enclosing_directory, self.__object_name)
 
     @property

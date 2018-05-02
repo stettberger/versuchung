@@ -143,7 +143,7 @@ class Experiment(Type, InputParameter):
             self.base_directory = os.path.realpath(self.base_directory)
             assert os.path.exists(self.base_directory)
         else:
-            self.base_directory = os.path.realpath(os.curdir)
+            self.base_directory = None
 
         # Sanity checking for input parameters.
         for (name, inp) in self.inputs.items():
