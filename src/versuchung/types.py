@@ -350,7 +350,6 @@ class List(InputParameter, Type, list):
         InputParameter.__init__(self)
         Type.__init__(self)
         list.__init__(self, default_value)
-        self.__default_value = default_value
         if type(datatype) != type:
             datatype = type(datatype)
         self.datatype = datatype
@@ -363,25 +362,20 @@ class List(InputParameter, Type, list):
 
 
     def before_experiment_run(self, parameter_type):
-        if parameter_type == "input" and not self.__command_line_parsed:
-            # We were called on the default value. No command line was given
-            count = 0
-            for i in self:
-                self.subobjects["%d" % count] = i
-                count += 1
+        for idx, value in enumerate(self):
+            self.subobjects[str(idx)] = value
 
         Type.before_experiment_run(self,parameter_type)
 
     def inp_extract_cmdline_parser(self, opts, args):
         import shlex
         args = self.inp_parser_extract(opts, None)
-        self.__command_line_parsed = True
-
         if not args:
-            for value in self.__default_value:
-                self.subobjects["%d" % len(self)] = value
-        else:
-            self[:] = [] # Remove default values
+            return
+
+        # Remove default values
+        self[:] = []
+        self.subobjects.clear()
 
         while len(args) > 0:
             arg = args.pop(0)
@@ -420,7 +414,7 @@ class List(InputParameter, Type, list):
     @property
     def value(self):
         """Returns the object (which behaves like a list) itself. This
-        is only implemented for a coherent API."""
+           is only implemented for a coherent API."""
         return self
 
     def __repr__(self):
