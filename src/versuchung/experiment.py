@@ -155,6 +155,11 @@ class Experiment(Type, InputParameter):
                 sys.exit(-1)
             self.subobjects[name] = inp
 
+            # Restart input parameters from metadata
+            if default_experiment_instance and hasattr(inp, "__reinit__"):
+                inp.__reinit__(self.metadata[name])
+
+
         for (name, outp) in self.outputs.items():
             if not isinstance(outp, OutputParameter):
                 print("%s cannot be used as an output parameter" % name)

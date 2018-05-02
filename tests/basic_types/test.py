@@ -24,5 +24,8 @@ if __name__ == "__main__":
     import shutil
     t = BasicTypesTest()
     dirname = t(["--bool", "no"] + sys.argv)
+
+    assert BasicTypesTest(dirname).bool.value == t.bool.value
+
     shutil.rmtree(dirname)
     print("success")

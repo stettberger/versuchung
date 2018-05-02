@@ -129,8 +129,9 @@ class Type(object):
 
 
 
-
 class InputParameter:
+    is_restartable = False
+
     def __init__(self):
         pass
     def inp_setup_cmdline_parser(self, parser):
@@ -197,17 +198,20 @@ class String(InputParameter, Type):
         Type.__init__(self)
         self.__value = default_value
 
+    def __reinit__(self, value):
+        self.__value = value
+
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, self.__value)
+
     def inp_extract_cmdline_parser(self, opts, args):
         self.__value = self.inp_parser_extract(opts, None)
 
     def inp_metadata(self):
-
         return {self.name: self.value}
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
     def __repr__(self):
         return Type.__repr__(self, self.__value)
@@ -218,6 +222,7 @@ class String(InputParameter, Type):
         or the parameter given on the command line"""
         return self.__value
 
+
 class Bool(InputParameter, Type):
     """Can be used as: **input parameter**
 
@@ -227,6 +232,9 @@ class Bool(InputParameter, Type):
         InputParameter.__init__(self)
         Type.__init__(self)
         self.__value = default_value
+
+    def __reinit__(self, value):
+        self.__value = value
 
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, self.__value)
@@ -265,6 +273,10 @@ class Integer(InputParameter, Type):
         InputParameter.__init__(self)
         Type.__init__(self)
         self.__value = default_value
+
+    def __reinit__(self, value):
+        self.__value = value
+
 
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, self.__value)
@@ -355,6 +367,18 @@ class List(InputParameter, Type, list):
         self.datatype = datatype
         self.__command_line_parsed = False
 
+    def __reinit__(self, values):
+        if hasattr(self.datatype, "__reinit__"):
+            self[:] = []
+            self.subobjects.clear()
+            for item in values:
+                # Intatiate Datatype
+                item = self.datatype(item)
+                self.subobjects["%d" % len(self)] = item
+                self.append(item)
+
+
+
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, None, [], action="append",
                             help = "List parameter for type %s" %
@@ -406,9 +430,11 @@ class List(InputParameter, Type, list):
 
 
     def inp_metadata(self):
-        metadata = {}
-        for item in self:
-            metadata.update(item.inp_metadata())
+        metadata = {self.name: []}
+        for idx, item in enumerate(self):
+            m = item.inp_metadata()
+            metadata[self.name].append(m["%s-%d" % (self.name, idx)])
+            metadata.update(m)
         return metadata
 
     @property
