@@ -125,12 +125,25 @@ class Experiment(Type, InputParameter):
         """
         Type.__init__(self)
         InputParameter.__init__(self)
-
         self.title = self.__class__.__name__
         self.static_experiment = self
+        if default_experiment_instance and not os.path.exists(default_experiment_instance):
+            default_experiment_instance = None
+        self.__reinit__(default_experiment_instance)
 
-        self.__experiment_instance = default_experiment_instance
-        self.__metadata = None
+    def __reinit__(self, experiment_path):
+        self.__experiment_instance = experiment_path
+        if experiment_path:
+            self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
+            self.base_directory = os.path.realpath(self.base_directory)
+            assert os.path.exists(self.base_directory)
+
+            with open(os.path.join(experiment_path, "metadata")) as fd:
+                metadata = eval(fd.read())
+                self.__metadata = metadata
+        else:
+            self.base_directory = None
+            self.__metadata = None
 
         # Copy input and output objects
         self.inputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.inputs))
@@ -138,12 +151,7 @@ class Experiment(Type, InputParameter):
         self.outputs = JavascriptStyleDictAccess(copy.deepcopy(self.__class__.outputs))
         self.o = self.outputs
 
-        if default_experiment_instance != None:
-            self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
-            self.base_directory = os.path.realpath(self.base_directory)
-            assert os.path.exists(self.base_directory)
-        else:
-            self.base_directory = None
+        self.subobjects.clear()
 
         # Sanity checking for input parameters.
         for (name, inp) in self.inputs.items():
@@ -155,16 +163,25 @@ class Experiment(Type, InputParameter):
                 sys.exit(-1)
             self.subobjects[name] = inp
 
-            # Restart input parameters from metadata
-            if default_experiment_instance and hasattr(inp, "__reinit__"):
-                inp.__reinit__(self.metadata[name])
-
 
         for (name, outp) in self.outputs.items():
             if not isinstance(outp, OutputParameter):
                 print("%s cannot be used as an output parameter" % name)
                 sys.exit(-1)
             self.subobjects[name] = outp
+
+
+        # Reinit Children Attributes
+        if experiment_path:
+            for (name, inp) in self.inputs.items():
+                if hasattr(inp, "__reinit__"):
+                    inp.__reinit__(metadata[name])
+                else:
+                    # We cannot reinit this input from metadata. Therefore it is better to clear it.
+                    logging.debug('Cannot reinit field %s. Setting it to None', name)
+                    self.inputs[name] = None
+
+
 
     def __setup_parser(self):
         self.__parser = OptionParser("%prog <options>")
@@ -416,9 +433,12 @@ class Experiment(Type, InputParameter):
         assert os.path.exists(self.base_directory), \
             "Base Directory does not exist"
 
+        self.__reinit__(self.__experiment_instance)
+
         for (name, outp) in self.outputs.items():
             del self.subobjects[name]
             self.subobjects[name] = outp
+
 
     def inp_metadata(self):
         return {self.name: self.__experiment_instance}

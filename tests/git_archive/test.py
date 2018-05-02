@@ -7,7 +7,7 @@ from versuchung.archives import TarArchive, GitArchive
 import os
 
 class GitArchiveTest(Experiment):
-    inputs = {"git": GitArchive(TarArchive("origin.tar.gz")),
+    inputs = {"git":      GitArchive(TarArchive("origin.tar.gz")),
               "git_bare": GitArchive(TarArchive("origin.tar.gz"), shallow=True)
               }
 
@@ -30,4 +30,11 @@ if __name__ == "__main__":
     import shutil
     t = GitArchiveTest()
     dirname = t(sys.argv)
+
+    # Reinit of Git Archive must fail
+    reinit = GitArchiveTest(dirname)
+    assert reinit.inputs['git'] is None
+    assert reinit.inputs['git_bare'] is None
+
+
     shutil.rmtree(dirname)
