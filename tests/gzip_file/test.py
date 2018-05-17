@@ -10,8 +10,8 @@ class SimpleExperiment(Experiment):
 
     def run(self):
         with self.tmp_directory as d:
-            assert self.tmp_directory.path in self.gz.path
-            assert self.gz.value.strip() == "CONTENT"
+            assert self.tmp_directory.path in self.gz.gunzip_path
+            assert self.gz.value.strip() == "CONTENT", self.gz.value
 
             self.gz_out.value = "OUTPUT"
 

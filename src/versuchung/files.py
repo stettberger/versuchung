@@ -14,6 +14,7 @@
 
 
 from versuchung.types import InputParameter, OutputParameter, Type
+import versuchung.archives
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -92,9 +93,16 @@ class File(FilesystemObject):
     disk before the experiment finishes.
     """
 
-    def __init__(self, default_filename=""):
+    def __init__(self, default_filename="", binary=False):
         FilesystemObject.__init__(self, default_filename)
         self.__value = None
+
+        self.__binary = binary
+        if binary:
+            self.__binary_mode = "b"
+        else:
+            self.__binary_mode = ""
+
 
     @property
     def value(self):
@@ -102,7 +110,7 @@ class File(FilesystemObject):
         content of the specified file"""
         if not self.__value:
             try:
-                with open(self.path) as fd:
+                with open(self.path, "r" + self.__binary_mode) as fd:
                     self.__value = self.after_read(fd.read())
             except IOError:
                 # File couldn't be read
@@ -132,7 +140,7 @@ class File(FilesystemObject):
         """Flush the cached content of the file to disk"""
         if self.__value == None:
             return
-        with open(self.path, "w+") as fd:
+        with open(self.path, "w" + self.__binary_mode + "+") as fd:
             v = self.before_write(self.value)
             if v is None:
                 v = ""
@@ -274,7 +282,10 @@ class Directory(FilesystemObject, Directory_op_with):
                 self.subobjects[name] = d
                 yield d
             else:
-                f = File(name)
+                if p.endswith(".gz"):
+                    f = versuchung.archives.GzipFile(name)
+                else:
+                    f = File(name)
                 f.set_path(self.path, p)
                 self.subobjects[name] = f
                 yield f
@@ -284,7 +295,7 @@ class Directory(FilesystemObject, Directory_op_with):
         if parameter_type == "output":
             self.__ensure_dir_exists()
 
-    def new_file(self, name):
+    def new_file(self, name, compressed=False):
         """Generate a new :class:`~versuchung.files.File` in the
         directory. It will be flushed automatically if the experiment
         is over."""
@@ -292,7 +303,10 @@ class Directory(FilesystemObject, Directory_op_with):
             raise RuntimeError("Filename {} does not match filter {}".\
                                  format(name, self.filename_filter))
         self.__ensure_dir_exists()
-        f = File(name)
+        if compressed:
+            f = versuchung.archives.GzipFile(name)
+        else:
+            f = File(name)
         f.set_path(self.path, name)
         f.value = ""
         self.subobjects[name] = f

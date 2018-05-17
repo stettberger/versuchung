@@ -175,7 +175,11 @@ class Experiment(Type, InputParameter):
         if experiment_path:
             for (name, inp) in self.inputs.items():
                 if hasattr(inp, "__reinit__"):
-                    inp.__reinit__(metadata[name])
+                    try:
+                        inp.__reinit__(metadata[name])
+                    except:
+                        logging.debug('Cannot reinit field %s. Setting it to None', name)
+                        self.inputs[name] = None
                 else:
                     # We cannot reinit this input from metadata. Therefore it is better to clear it.
                     logging.debug('Cannot reinit field %s. Setting it to None', name)
@@ -201,12 +205,6 @@ class Experiment(Type, InputParameter):
                 continue
             inp.inp_setup_cmdline_parser(self.__parser)
 
-    def __setup_tmp_directory(self):
-        """Creat temporary directory and assign it to every input and
-        output directories tmp_directory slots"""
-        # Create temp directory
-        self.tmp_directory = Directory(tempfile.mkdtemp())
-        self.subobjects["tmp_directory"] = self.tmp_directory
 
     def execute(self, args = [], **kwargs):
         """Calling this method will execute the experiment
@@ -315,7 +313,8 @@ class Experiment(Type, InputParameter):
         self.subobjects.update()
 
         # Now set up the experiment tmp directory
-        self.__setup_tmp_directory()
+        self.tmp_directory = Directory(tempfile.mkdtemp())
+        self.subobjects["tmp_directory"] = self.tmp_directory
 
         for obj in self.inputs.values():
             obj.before_experiment_run("input")

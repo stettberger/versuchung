@@ -20,6 +20,11 @@ from versuchung.execute import shell
 import logging
 import os
 import sys
+import gzip
+try:
+    from StringIO import StringIO as BytesIO
+except ModuleNotFoundError:
+    from io import BytesIO
 
 class TarArchive(Type, InputParameter, Directory_op_with):
     """Can be used as: **input parameter**
@@ -257,34 +262,32 @@ class GitArchive(InputParameter, Type, Directory_op_with):
 
 
 class GzipFile(File):
-    def original_filename(self):
-        return self.__original_filename
+    def __init__(self, default_filename=""):
+        File.__init__(self, default_filename, binary=True)
 
     @property
-    def value(self):
-        path = File.path.fget(self)
-        if self.parameter_type == "input" and not os.path.exists(path) and os.path.exists(self.__original_filename):
-            shell("gunzip < %s > %s", self.__original_filename,
-                  path)
-        return File.value.fget(self)
+    def gunzip_path(self):
+        """Decompress file into the temporary directory and return path to this location"""
+        assert self.tmp_directory is not None, \
+            "Can gunzip file only as part of an active experiment"
 
-    @value.setter
-    def value(self, value):
-        File.value.fset(self, value)
+        base = os.path.basename(self.path.rstrip(".gz"))
+        filename = os.path.join(self.tmp_directory.path,
+                                self.name + "_" + base)
 
-    def before_experiment_run(self, parameter_type):
-        self.parameter_type = parameter_type
-        if parameter_type == "input":
-            self.__original_filename = File.path.fget(self)
-            self.subobjects["filename"] = File(self.__original_filename)
-            filename = self.name + "_" + os.path.basename(self.path.rstrip(".gz"))
-            self.set_path(self.tmp_directory.path, filename)
-            _ = self.value # Unzip the file into temporary variable
+        if not os.path.exists(filename):
+            shell("gunzip < %s > %s", self.path, filename)
 
-        File.before_experiment_run(self, parameter_type)
+        return filename
 
-    def after_experiment_run(self, parameter_type):
-        File.after_experiment_run(self, parameter_type)
-        if parameter_type == "output":
-            shell("gzip -c %s > %s.1", self.path, self.path)
-            shell("mv %s.1 %s", self.path, self.path)
+    def after_read(self, value):
+        x = BytesIO(value)
+        fd = gzip.GzipFile(fileobj=x)
+        return fd.read().decode()
+
+    def before_write(self, value):
+        x = BytesIO()
+        fd = gzip.GzipFile(fileobj=x, mode="w")
+        fd.write(value.encode())
+        fd.close()
+        return x.getvalue()
