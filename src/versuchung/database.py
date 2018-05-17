@@ -1,14 +1,14 @@
 # This file is part of versuchung.
-# 
+#
 # versuchung is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # versuchung is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -137,7 +137,7 @@ database=%s
                          self.dynamic_experiment.experiment_identifier,
                          str(self.dynamic_experiment.metadata))
 
-    @property 
+    @property
     def handle(self):
         """:return: handle -- MySQLdb database handle"""
         assert self.__database_connection
@@ -155,7 +155,7 @@ database=%s
         self.__database_connection.commit()
         return c
 
-    def create_table(self, name, fields = [("key", "text"), ("value", "text")], 
+    def create_table(self, name, fields = [("key", "text"), ("value", "text")],
                      keys = None, conflict_strategy = None):
         """Creates a new table in the database. ``name`` is the name
         of newly created table. The ``fields`` are a list of
@@ -263,7 +263,7 @@ class Database_SQLite(InputParameter, OutputParameter, Type, Database_Abstract):
         """:return: string -- path to the sqlite database file"""
         return os.path.join(self.base_directory, self.__database_path)
 
-    @property 
+    @property
     def handle(self):
         """:return: handle -- sqlite3 database handle"""
         assert self.__database_connection
@@ -280,7 +280,7 @@ class Database_SQLite(InputParameter, OutputParameter, Type, Database_Abstract):
 
 
 
-    def create_table(self, name, fields = [("key", "text"), ("value", "text")], 
+    def create_table(self, name, fields = [("key", "text"), ("value", "text")],
                      keys = None, conflict_strategy = "REPLACE"):
         """Creates a new table in the database. ``name`` is the name
         of newly created table. The ``fields`` are a list of
@@ -328,7 +328,7 @@ class Table(InputParameter, OutputParameter, Type):
     is text. If it's a tuple the first entry is the name and the second its type::
 
     >>> [("foo", "integer"), "barfoo"]
-   
+
     This will result in two columns, one with type integer and one
     with type text. If a db is given this one is used instead of a
     default sqlite database named ``sqlite3.db``
@@ -368,7 +368,7 @@ class Table(InputParameter, OutputParameter, Type):
         return real_fields
 
     def before_experiment_run(self, parameter_type):
-        # Add database object as an 
+        # Add database object as an
         self.subobjects["database"] = self.__db
         Type.before_experiment_run(self, parameter_type)
 
@@ -537,7 +537,7 @@ class Database_SQlite_Merger:
         cur = self.target.cursor()
 
         TableDictrows = set()
-        
+
         for name in self.tables:
             rows = set()
             headers = None
@@ -557,7 +557,7 @@ class Database_SQlite_Merger:
 
             if headers == ["experiment", "key", "value"]:
                 TableDictrows.update(rows)
-        
+
         cur.execute("CREATE TABLE IF NOT EXISTS TableDict (experiment text, key text, value text,"
                     "UNIQUE (key) ON CONFLICT REPLACE)")
         cur.executemany("INSERT INTO TableDict (experiment, key, value) values(?,?,?)",
@@ -571,7 +571,7 @@ class Database_SQlite_Merger:
         self.collect_and_create_tables(drop = not update)
         self.collect_data()
         self.target.close()
-        
+
 
 if __name__ == '__main__':
     import sys
@@ -582,4 +582,3 @@ if __name__ == '__main__':
 
     merger = Database_SQlite_Merger(sys.argv[1], sys.argv[2:])
     merger.merge()
-

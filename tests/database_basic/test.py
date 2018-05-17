@@ -39,7 +39,7 @@ if __name__ == "__main__":
     assert os.path.exists(os.path.join(r1, "foobar.db"))
 
     e2 = SimpleExperiment2()
-    r2 = e2(se=r1)
+    r2 = e2(se=os.path.abspath(r1))
 
     if r1:
         shutil.rmtree(r1)
@@ -47,4 +47,3 @@ if __name__ == "__main__":
     if r2:
         shutil.rmtree(r2)
     print("success")
-

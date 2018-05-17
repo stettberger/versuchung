@@ -133,8 +133,12 @@ class Experiment(Type, InputParameter):
 
     def __reinit__(self, experiment_path):
         self.__experiment_instance = experiment_path
+
         if experiment_path:
-            self.base_directory = os.path.join(os.curdir, self.__experiment_instance)
+            if "/" in experiment_path:
+                self.__experiment_instance = os.path.basename(experiment_path)
+
+            self.base_directory = os.path.join(os.curdir, experiment_path)
             self.base_directory = os.path.realpath(self.base_directory)
             assert os.path.exists(self.base_directory)
 
@@ -432,7 +436,7 @@ class Experiment(Type, InputParameter):
         assert os.path.exists(self.base_directory), \
             "Base Directory does not exist"
 
-        self.__reinit__(self.__experiment_instance)
+        self.__reinit__(path)
 
         for (name, outp) in self.outputs.items():
             del self.subobjects[name]
