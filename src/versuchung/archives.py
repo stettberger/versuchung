@@ -266,17 +266,18 @@ class GzipFile(File):
         File.__init__(self, default_filename, binary=True)
 
     @property
-    def gunzip_path(self):
+    def path(self):
         """Decompress file into the temporary directory and return path to this location"""
         assert self.tmp_directory is not None, \
             "Can gunzip file only as part of an active experiment"
 
-        base = os.path.basename(self.path.rstrip(".gz"))
+        path = File.path.fget(self)
+        base = os.path.basename(path.rstrip(".gz"))
         filename = os.path.join(self.tmp_directory.path,
                                 self.name + "_" + base)
 
         if not os.path.exists(filename):
-            shell("gunzip < %s > %s", self.path, filename)
+            shell("gunzip < %s > %s", path, filename)
 
         return filename
 

@@ -110,7 +110,7 @@ class File(FilesystemObject):
         content of the specified file"""
         if not self.__value:
             try:
-                with open(self.path, "r" + self.__binary_mode) as fd:
+                with open(self.original_path, "r" + self.__binary_mode) as fd:
                     self.__value = self.after_read(fd.read())
             except IOError:
                 # File couldn't be read
@@ -120,6 +120,10 @@ class File(FilesystemObject):
     @value.setter
     def value(self, value):
         self.__value = value
+
+    @property
+    def original_path(self):
+        return File.path.fget(self)
 
     def write(self, content, append = False):
         """Similar to the :attr:`value` property. If the parameter
@@ -140,7 +144,7 @@ class File(FilesystemObject):
         """Flush the cached content of the file to disk"""
         if self.__value == None:
             return
-        with open(self.path, "w" + self.__binary_mode + "+") as fd:
+        with open(self.original_path, "w" + self.__binary_mode + "+") as fd:
             v = self.before_write(self.value)
             if v is None:
                 v = ""
@@ -157,8 +161,8 @@ class File(FilesystemObject):
 
     def make_executable(self):
         """makes a file exectuable (chmod +x $file)"""
-        st = os.stat(self.path)
-        os.chmod(self.path, st.st_mode | stat.S_IEXEC)
+        st = os.stat(self.original_path)
+        os.chmod(self.original_path, st.st_mode | stat.S_IEXEC)
 
     def after_read(self, value):
         """To provide filtering of file contents in subclasses, overrwrite this method.

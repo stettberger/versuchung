@@ -10,7 +10,7 @@ class SimpleExperiment(Experiment):
 
     def run(self):
         with self.tmp_directory as d:
-            assert self.tmp_directory.path in self.gz.gunzip_path
+            assert self.tmp_directory.path in self.gz.path
             assert self.gz.value.strip() == "CONTENT", self.gz.value
 
             self.gz_out.value = "OUTPUT"
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     experiment = SimpleExperiment()
     dirname = experiment(sys.argv)
 
-    assert len(open(experiment.gz_out.path, 'rb').read()) > 0
+    assert len(open(experiment.gz_out.original_path, 'rb').read()) > 0
 
     if dirname:
         shutil.rmtree(dirname)
