@@ -31,7 +31,7 @@ cmdclass["test"] = TestCommand
 
 version_info = {
     'name': 'versuchung',
-    'version': '1.2',
+    'version': '1.3',
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
@@ -43,7 +43,9 @@ version_info = {
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.6' ],
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 3.5'
+    ],
 }
 
 
