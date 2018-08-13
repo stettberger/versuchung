@@ -29,13 +29,18 @@ class TestCommand(Command):
 
 cmdclass["test"] = TestCommand
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 version_info = {
     'name': 'versuchung',
-    'version': '1.3',
+    'version': '1.3.1',
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
     'url': 'http://github.de/stettberger/versuchung',
+    'long_description': long_description,
+    'long_description_content_type': "text/markdown",
     'license': 'GPLv3',
     'classifiers': [
         'Development Status :: 4 - Beta',

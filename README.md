@@ -24,7 +24,7 @@ result sets further.
 Documentation
 =============
 
-For the documentation, please refer to https://vamos.informatik.uni-erlangen.de/versuchung-doc/
+For the documentation, please refer to https://versuchung.readthedocs.io
 
 Getting the latest version
 ==========================
