@@ -57,7 +57,7 @@ copyright = u'2012-2014, Christian Dietrich'
 p = Popen("git describe --always", stdout=PIPE, stderr=STDOUT, shell=True)
 (stdout, _) = p.communicate()
 if p.returncode == 0 and len(stdout) > 0:
-    version = stdout.rstrip()
+    version = stdout.rstrip().decode()
 else:
     version = "0.1"
 
