@@ -23,7 +23,7 @@ import sys
 import gzip
 try:
     from StringIO import StringIO as BytesIO
-except ModuleNotFoundError:
+except Exception:
     from io import BytesIO
 
 class TarArchive(Type, InputParameter, Directory_op_with):
