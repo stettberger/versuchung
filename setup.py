@@ -2,9 +2,7 @@
 
 from __future__ import print_function
 
-from distutils.core import setup
-from distutils.cmd import Command
-from distutils.spawn import spawn
+from setuptools import setup, Command
 
 import sys
 
@@ -19,7 +17,7 @@ except:
 class TestCommand(Command):
     user_options = []
     def run(self):
-        spawn(["make", "-C", "tests", "PYTHON=%s" % (sys.executable,)], verbose = 1)
+        self.spawn(["make", "-C", "tests", "PYTHON=%s" % (sys.executable,)])
 
     def initialize_options(self):
         pass
@@ -34,7 +32,7 @@ with open("README.md", "r") as fh:
 
 version_info = {
     'name': 'versuchung',
-    'version': '1.3.1',
+    'version': '1.3.3',
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
@@ -51,6 +49,7 @@ version_info = {
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 3.5'
     ],
+    'include_package_data': True,
 }
 
 
