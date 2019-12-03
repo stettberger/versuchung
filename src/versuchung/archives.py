@@ -21,6 +21,7 @@ import logging
 import os
 import sys
 import gzip
+import re
 try:
     from StringIO import StringIO as BytesIO
 except Exception:
@@ -183,6 +184,19 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         else:
             Type.before_experiment_run(self, parameter_type)
 
+    def tags(self, regex=None):
+        cmd = "git ls-remote %s refs/tags/* | cut  -f2 | cut -d '/' -f3" % (self.__clone_url)
+        (lines, ret) = shell(cmd)
+        if ret != 0 or lines == 0:
+            print("\n".join(lines))
+            sys.exit(-1)
+        ret = []
+        for line in lines:
+            if line.endswith("^{}"):
+                continue
+            if regex is None or (regex is not None and re.match(regex, line)):
+                ret.append(line)
+        return ret
     def checkout_hash(self):
         """Return the hash of the HEAD commit hash as string"""
         if not self.__hash:
