@@ -197,6 +197,17 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             if regex is None or (regex is not None and re.match(regex, line)):
                 ret.append(line)
         return ret
+
+    def checkout(self, ref):
+        cmd = "cd '%s' && git checkout '%s'" % (self.value.path, ref)
+        (lines, ret) = shell(cmd)
+        if ret != 0 or lines == 0:
+            print("\n".join(lines))
+            sys.exit(-1)
+        self.__ref = ref
+        self.checkout_hash()
+
+
     def checkout_hash(self):
         """Return the hash of the HEAD commit hash as string"""
         if not self.__hash:
