@@ -7,7 +7,8 @@ from versuchung.archives import TarArchive, GitArchive
 import os
 
 class GitArchiveTest(Experiment):
-    inputs = {"git":      GitArchive(TarArchive("origin.tar.gz")),
+    inputs = {"git":      GitArchive(TarArchive("origin.tar.gz"), tags=True, branches="master"),
+              "git_full": GitArchive(TarArchive("origin.tar.gz"), tags=True, branches=True),
               "git_bare": GitArchive(TarArchive("origin.tar.gz"), shallow=True)
               }
 
@@ -32,10 +33,21 @@ class GitArchiveTest(Experiment):
         assert len(tags) == 1
 
         branches = self.git.branches()
-        assert set(["master", "newbranch"]) == set(branches.keys())
+        assert set(["master", "master-2"]) == set(branches.keys())
 
-        assert not self.git.branches(regex_filter="not_ex.*sting")
+        assert set(["master", "master-2", "newbranch"]) == set(self.git_full.branches().keys())
 
+
+        self.git.checkout(tag="newtag")
+        self.git.checkout(branch="master")
+        try:
+            x = self.git.checkout(branch="newbranch")
+            assert False, "newbranch should not be visible"
+        except RuntimeError as e:
+            pass
+
+        assert "git-branches" in self.metadata
+        assert "master" in self.metadata["git-branches"]
 
         print("success")
 

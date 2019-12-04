@@ -149,11 +149,15 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             print path
     """
 
-    def __init__(self, clone_url = None, ref = "refs/heads/master", shallow = False):
+    def __init__(self, clone_url = None, ref = "refs/heads/master", shallow=False,
+                 branches=None, tags=None):
         """clone_url: where to the git archive from
               This might either be a string or a object with a path attribute
            ref: which git reference to checkout
            shallow: do a shallow copy (using git-archive).
+           branches: Also fetch other branches. Use branches=True for all branches and branches=REGEX for a filtered view.
+           tags:     Also fetch other tags. Use tags=True for all tags and tags=REGEX for a filtered view.
+
 
            The git archive will be cloned to self.name (which is the
            key in the input parameters dict)"""
@@ -166,6 +170,12 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         self.__shallow = shallow
         self.__value = None
         self.__hash = None
+
+        # Include branches and tags into the metadata-hash
+        self.__filter_refs = {"branches": branches, "tags": tags}
+
+        if (branches or tags ) and shallow:
+             raise RuntimeError("Shallow clone and branch/tag checkout is not supported.")
 
     def inp_setup_cmdline_parser(self, parser):
         self.inp_parser_add(parser, "clone-url", self.__clone_url)
@@ -222,34 +232,60 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         """
         return self.__references(regex_filter=regex_filter)
 
-    def tags(self, regex_filter=None):
+    def tags(self):
         """Like references, but returns a list of tags in the repository. The
-           keys are transformed (refs/tags/$X -> $X). The ``regex`` of tags.
+           keys are transformed (refs/tags/$X -> $X).
+           The GitArchive(tags=...) filter applies!
+
 
            @returns dictionary of tag name to commit hashes
 
         """
+        regex_filter = None
+        arg  = self.__filter_refs["tags"]
+        if arg and arg is not True:
+            regex_filter = arg
         return self.__references(prefix_filter="refs/tags/", regex_filter=regex_filter)
 
-    def branches(self, regex_filter=None):
+    def branches(self):
         """Like references, but returns a list of branches/heads in the
            repository. The keys are transformed (refs/heads/$X -> $X).
-           The ``regex`` of tags.
+           The GitArchive(branches=...) filter applies!
 
            @returns dictionary of tag name to commit hashes
 
         """
+        regex_filter = None
+        arg  = self.__filter_refs["branches"]
+        if arg and arg is not True:
+            regex_filter = arg
         return self.__references(prefix_filter="refs/heads/", regex_filter=regex_filter)
 
 
-    def checkout(self, ref):
-        cmd = "cd '%s' && git checkout '%s'" % (self.value.path, ref)
-        (lines, ret) = shell(cmd)
-        if ret != 0 or lines == 0:
+    def checkout(self, branch=None, tag=None):
+        if branch:
+            visible_branches = self.__metadata.get("branches", {})
+            if branch not in visible_branches:
+                raise RuntimeError("Branch `%s' is not visible, please parametrize GitArchive(branches=...) correctly" % branch)
+            self.__ref = "refs/heads/" + branch
+            self.__hash = visible_branches[branch]
+        if tag:
+            visible_tags = self.__metadata.get("tags", {})
+            if tag not in visible_tags:
+                raise RuntimeError("Tag `%s' is not visible, please parametrize GitArchive(tags=...) correctly" % tag)
+            self.__ref =  "refs/tags/" + tag
+            self.__hash = visible_tags[tag]
+
+        if not self.__ref:
+            raise RuntimeError("GitArchive.checkout() requires branch or tag parameter")
+
+        cmd = "cd '%s' && git checkout %s"
+        (lines, ret) = shell(cmd, self.value.path, self.__ref)
+        if ret != 0:
             print("\n".join(lines))
-            sys.exit(-1)
-        self.__ref = ref
-        self.checkout_hash()
+            raise RuntimeError("GitArchive.checkout(%s) failed" % self.__ref)
+
+        return (self.__ref, self.__hash)
 
 
     def checkout_hash(self):
@@ -278,9 +314,20 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         return self.__clone_url
 
     def inp_metadata(self):
-        return {self.name + "-clone-url": str(self.__clone_url),
-                self.name + "-ref": self.__ref,
-                self.name + "-hash": self.checkout_hash()}
+        ret = {"clone-url": str(self.__clone_url),
+               "ref": self.__ref,
+               "hash": self.checkout_hash()}
+
+        # If the user wants to checkout different branches, these have
+        # to influence the metadata hash
+        for ref, getter in [("branches", self.branches),
+                            ("tags",     self.tags)]:
+            if self.__filter_refs[ref]:
+                ret[ref] = getter()
+
+        self.__metadata = ret
+
+        return {self.name + "-" + k: v for (k,v) in ret.items()}
 
     def __setup_value(self):
         if "path" in dir(self.__clone_url):
@@ -314,6 +361,13 @@ class GitArchive(InputParameter, Type, Directory_op_with):
                     print("\n".join(lines))
                     sys.exit(-1)
 
+                # Fetch all visible branches and tags
+                for branch in self.__metadata.get("branches", {}):
+                    cmd = "cd %s && git fetch %s refs/heads/%s && git update-ref refs/heads/%s FETCH_HEAD"
+                    shell(cmd, self.name, self.__clone_url, branch, branch)
+                for tag in self.__metadata.get("tags", {}):
+                    cmd = "cd %s && git fetch %s refs/tags/%s && git update-ref refs/heads/%s FETCH_HEAD"
+                    shell(cmd, self.name, self.__clone_url, tag, tag)
 
             return Directory(os.path.abspath(self.name))
 
