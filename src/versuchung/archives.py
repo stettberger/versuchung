@@ -184,19 +184,63 @@ class GitArchive(InputParameter, Type, Directory_op_with):
         else:
             Type.before_experiment_run(self, parameter_type)
 
-    def tags(self, regex=None):
-        cmd = "git ls-remote %s refs/tags/* | cut  -f2 | cut -d '/' -f3" % (self.__clone_url)
-        (lines, ret) = shell(cmd)
+    def __references(self, prefix_filter=None, regex_filter=None):
+        (lines, ret) = shell("git ls-remote %s 'refs/*'", self.__clone_url)
+
         if ret != 0 or lines == 0:
             print("\n".join(lines))
-            sys.exit(-1)
-        ret = []
+            raise RuntimeError("Could not list references in repository")
+
+        ret = {}
         for line in lines:
-            if line.endswith("^{}"):
+            commit_hash, refname = line.strip().split("\t", 1)
+
+            # Apply regex and prefix filter
+            if prefix_filter:
+                if not refname.startswith(prefix_filter):
+                    continue
+                # Shorten the Prefix
+                refname = refname[len(prefix_filter):]
+
+            if regex_filter and not re.match(regex_filter, refname):
                 continue
-            if regex is None or (regex is not None and re.match(regex, line)):
-                ret.append(line)
+
+            ret[refname] = commit_hash
+
         return ret
+
+    def references(self, regex_filter=None):
+        """Inspect reference list of the repository. This reference list
+           includes all branches, tags, and whatsoever. All reference names are
+           fully qualified (refs/tags/*, refs/heads*).
+
+           If the ``regex_filter`` is given, only reference names that
+           match the regex are returned.
+
+           @returns a dictionary that maps references to commit hashes
+
+        """
+        return self.__references(regex_filter=regex_filter)
+
+    def tags(self, regex_filter=None):
+        """Like references, but returns a list of tags in the repository. The
+           keys are transformed (refs/tags/$X -> $X). The ``regex`` of tags.
+
+           @returns dictionary of tag name to commit hashes
+
+        """
+        return self.__references(prefix_filter="refs/tags/", regex_filter=regex_filter)
+
+    def branches(self, regex_filter=None):
+        """Like references, but returns a list of branches/heads in the
+           repository. The keys are transformed (refs/heads/$X -> $X).
+           The ``regex`` of tags.
+
+           @returns dictionary of tag name to commit hashes
+
+        """
+        return self.__references(prefix_filter="refs/heads/", regex_filter=regex_filter)
+
 
     def checkout(self, ref):
         cmd = "cd '%s' && git checkout '%s'" % (self.value.path, ref)

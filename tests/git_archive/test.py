@@ -22,6 +22,21 @@ class GitArchiveTest(Experiment):
             assert path == self.i.git.value.path
             assert os.path.abspath(os.curdir) == path
 
+        # References and hashes
+        refs = self.git.references()
+        assert "refs/tags/newtag" in refs
+        assert "refs/heads/newbranch" in refs
+
+        tags = self.git.tags()
+        assert "newtag" in tags
+        assert len(tags) == 1
+
+        branches = self.git.branches()
+        assert set(["master", "newbranch"]) == set(branches.keys())
+
+        assert not self.git.branches(regex_filter="not_ex.*sting")
+
+
         print("success")
 
 
