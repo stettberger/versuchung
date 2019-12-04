@@ -369,7 +369,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
                     cmd = "cd %s && git fetch %s refs/heads/%s && git update-ref refs/heads/%s FETCH_HEAD"
                     shell(cmd, self.name, self.__clone_url, branch, branch)
                 for tag in self.__metadata.get("tags", {}):
-                    cmd = "cd %s && git fetch %s refs/tags/%s && git update-ref refs/heads/%s FETCH_HEAD"
+                    cmd = "cd %s && git fetch %s refs/tags/%s && git update-ref refs/tags/%s FETCH_HEAD"
                     shell(cmd, self.name, self.__clone_url, tag, tag)
 
             return Directory(os.path.abspath(self.name))
