@@ -209,6 +209,9 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             if prefix_filter:
                 if not refname.startswith(prefix_filter):
                     continue
+                # I have no idea where these names come from
+                if refname.startswith("refs/tags/") and refname.endswith("^{}"):
+                    continue
                 # Shorten the Prefix
                 refname = refname[len(prefix_filter):]
 
