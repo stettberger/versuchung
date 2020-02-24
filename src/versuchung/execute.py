@@ -64,14 +64,18 @@ def quote_args(args):
     return args
 
 
-def __shell(failok, command, *args):
+def __shell(failok, command, *args, **kwargs):
     os.environ["LC_ALL"] = "C"
 
     args = quote_args(args)
     command = command % args
 
+    options = {'stdout': PIPE, 'stderr': STDOUT,
+               'shell': True, 'universal_newlines': True}
+    options.update(**kwargs)
+
     logging.debug("executing: " + command)
-    p = Popen(command, stdout=PIPE, stderr=STDOUT, shell=True, universal_newlines=True)
+    p = Popen(command, **options)
     stdout = ""
     while True:
         x = p.stdout.readline()
@@ -90,9 +94,23 @@ def __shell(failok, command, *args):
 
 
 @AdviceManager.advicable
-def shell(command, *args):
+def shell(command, *args, **kwargs):
     """
-    executes 'command' in a shell
+    | Executes ``args[0] % args[:1]`` in a shell.
+    | Keyword Arguments are passed through to the corresponding ``Popen()`` call.
+    | By default the following kwargs are passed:
+
+    +------------------------+----------------------+
+    |  Keyword               | Value                |
+    +========================+======================+
+    |  ``shell``             |  ``True``            |
+    +------------------------+----------------------+
+    |  ``stdout``            | ``subprocess.PIPE``  |
+    +------------------------+----------------------+
+    |  ``stderr``            | ``subprocess.STDOUT``|
+    +------------------------+----------------------+
+    |  ``universal_newlines``| ``True``             |
+    +------------------------+----------------------+
 
     .. note::
 
@@ -129,12 +147,12 @@ def shell(command, *args):
 
     :raises: :exc:`CommandFailed` if the returncode is != 0
     """
-    return __shell(False, command, *args)
+    return __shell(False, command, *args, **kwargs)
 
 @AdviceManager.advicable
-def shell_failok(command, *args):
+def shell_failok(command, *args, **kwargs):
     """Like :meth:`.shell`, but the throws no exception"""
-    return __shell(True, command, *args)
+    return __shell(True, command, *args, **kwargs)
 
 
 def add_sys_path(path):

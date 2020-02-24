@@ -22,6 +22,7 @@ import os
 import sys
 import gzip
 import re
+from subprocess import PIPE
 try:
     from StringIO import StringIO as BytesIO
 except Exception:
@@ -195,7 +196,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             Type.before_experiment_run(self, parameter_type)
 
     def __references(self, prefix_filter=None, regex_filter=None):
-        (lines, ret) = shell("git ls-remote %s 'refs/*'", self.__clone_url)
+        (lines, ret) = shell("git ls-remote %s 'refs/*'", self.__clone_url, stderr=PIPE)
 
         if ret != 0 or lines == 0:
             print("\n".join(lines))
@@ -283,7 +284,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             raise RuntimeError("GitArchive.checkout() requires branch or tag parameter")
 
         cmd = "cd '%s' && git checkout %s"
-        (lines, ret) = shell(cmd, self.value.path, self.__ref)
+        (lines, ret) = shell(cmd, self.value.path, self.__ref, stderr=PIPE)
         if ret != 0:
             print("\n".join(lines))
             raise RuntimeError("GitArchive.checkout(%s) failed" % self.__ref)
@@ -297,7 +298,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             cmd = "git ls-remote %s %s" % (self.__clone_url,
                                            self.__ref)
 
-            (lines, ret) = shell(cmd)
+            (lines, ret) = shell(cmd, stderr=PIPE)
             if ret != 0 or lines == 0:
                 print("\n".join(lines))
                 sys.exit(-1)
@@ -349,7 +350,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
                 cmd = "git clone %s %s"
                 args = (self.__clone_url, self.name)
 
-            (lines, ret) = shell(cmd, *args)
+            (lines, ret) = shell(cmd, *args, stderr=PIPE)
 
             if ret != 0:
                 print("\n".join(lines))
@@ -358,7 +359,7 @@ class GitArchive(InputParameter, Type, Directory_op_with):
             if not self.__shallow:
                 cmd = "cd %s && git gc && git fetch %s %s && git checkout FETCH_HEAD"
                 args = (self.name, self.__clone_url, self.__ref)
-                (lines, ret) = shell(cmd, *args)
+                (lines, ret) = shell(cmd, *args, stderr=PIPE)
 
                 if ret != 0:
                     print("\n".join(lines))
@@ -367,10 +368,10 @@ class GitArchive(InputParameter, Type, Directory_op_with):
                 # Fetch all visible branches and tags
                 for branch in self.__metadata.get("branches", {}):
                     cmd = "cd %s && git fetch %s refs/heads/%s && git update-ref refs/heads/%s FETCH_HEAD"
-                    shell(cmd, self.name, self.__clone_url, branch, branch)
+                    shell(cmd, self.name, self.__clone_url, branch, branch, stderr=PIPE)
                 for tag in self.__metadata.get("tags", {}):
                     cmd = "cd %s && git fetch %s refs/tags/%s && git update-ref refs/tags/%s FETCH_HEAD"
-                    shell(cmd, self.name, self.__clone_url, tag, tag)
+                    shell(cmd, self.name, self.__clone_url, tag, tag, stderr=PIPE)
 
             return Directory(os.path.abspath(self.name))
 
