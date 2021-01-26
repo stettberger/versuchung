@@ -71,7 +71,7 @@ class FilesystemObject(InputParameter, OutputParameter, Type):
 
     @property
     def dirname(self):
-        return os.path.basename(self.path)
+        return os.path.dirname(self.path)
 
     def set_path(self, base_directory, object_name):
         assert base_directory[0] == "/"
