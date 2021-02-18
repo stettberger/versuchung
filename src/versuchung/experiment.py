@@ -111,7 +111,7 @@ class Experiment(Type, InputParameter):
     def static_experiment(self, value):
         pass
 
-    def __init__(self, default_experiment_instance = None):
+    def __init__(self, default_experiment_instance = None, title=None):
         """The constructor of an experiment just fills in the
         necessary attributes but has *no* sideeffects on the outside
         world.
@@ -125,7 +125,7 @@ class Experiment(Type, InputParameter):
         """
         Type.__init__(self)
         InputParameter.__init__(self)
-        self.title = self.__class__.__name__
+        self.title = title or self.__class__.__name__
         self.static_experiment = self
         if default_experiment_instance and not os.path.exists(default_experiment_instance):
             default_experiment_instance = None
@@ -210,6 +210,8 @@ class Experiment(Type, InputParameter):
                                  help="symlink the result dir (as newest)")
         self.__parser.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
                                  help="increase verbosity (specify multiple times for more)")
+        self.__parser.add_option('--title', dest='title',
+                                 help="custom title of the experiment (default: Experiment class-name)")
 
         for (name, inp) in self.inputs.items():
             if type(inp) == LambdaType:
