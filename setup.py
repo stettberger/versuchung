@@ -30,7 +30,7 @@ with open("README.md", "r") as fh:
 
 version_info = {
     'name': 'versuchung',
-    'version': '1.3.3',
+    'version': '1.3.5',
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
