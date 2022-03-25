@@ -150,6 +150,84 @@ class PgfKeyDict(File, dict):
     def prefixed_with(self, prefix):
         return self.PrefixForPgfKeyDict(prefix, self)
 
+    def pandas(self, df, prefix="", names=None, verbose=False):
+        """Import pandas.DataFrame or pandas.Series as keys
+
+        This functions imports all cells from a DataFrame or Series as
+        individual keys. The key is generated from the index and the
+        columns (lines first, columns second). MultiIndex is supported
+        for both dimension. For example, for the following DataFrame
+
+           >>> import pandas as pd
+           >>> df = pd.DataFrame([[1,1,1], [4, 1.5, 4]], columns=['th', 'speedup', 'load'])
+           >>> df = df.set_index('th')
+           >>> df
+               speedup  load
+           th
+           1       1.0     1
+           4       1.5     4
+           >>> from versuchung.tex import PgfKeyDict
+           >>> pgf = PgfKeyDict("/tmp/test.tex")
+           >>> pgf.pandas(df, names=['th'], verbose=True)
+           th=1/speedup => 1.0
+           th=1/load => 1.0
+           th=4/speedup => 1.5
+           th=4/load => 4.0
+
+        With the ``names`` parameter, you can control whether a level
+        should be prefixed with the index name. In the above example,
+        ``th=`` is the result of the names parameter. A useful pattern
+        is to ``describe()`` a column:
+
+          >>> pgf.pandas(df.speedup.describe(), prefix="speedup", verbose=True)
+          speedup/count => 2.0
+          speedup/mean => 1.25
+          speedup/std => 0.3535533905932738
+          speedup/min => 1.0
+          speedup/25 percent => 1.125
+          speedup/50 percent => 1.25
+          speedup/75 percent => 1.375
+          speedup/max => 1.5
+        """
+        import pandas as pd
+
+        if prefix: prefix += "/"
+        else:      prefix = ""
+
+        def wrap_list(seq):
+            if hasattr(seq, "__iter__") and not type(seq) is str:
+                return seq
+            return [seq]
+
+        def zip_extend(a, b):
+            a_len, b_len = len(a), len(b)
+            ret_len = max(a_len, b_len)
+            return zip(list(a) + [None] * (ret_len - a_len), list(b) + [None] * (ret_len - b_len))
+
+        def fmt(name, key):
+            ret = []
+            for k, v in zip_extend(wrap_list(name), wrap_list(key)):
+                # print(names, k, hasattr(names, "__contains__") and k in names)
+                if k is not None and names == True or (hasattr(names, "__contains__") and k in names):
+                    ret.append(f"{k}={v}")
+                else:
+                    ret.append(str(v))
+            return "/".join(ret)
+
+        if isinstance(df, pd.DataFrame):
+            for index, row in df.iterrows():
+                pp = fmt(df.index.name or df.index.names, index)
+                self.pandas(row, prefix=prefix+pp, names=names, verbose=verbose)
+        elif isinstance(df, pd.Series):
+            for key in df.index:
+                pp = fmt(df.index.name or df.index.names, key)
+                dref_key = (prefix + pp).replace("%", " percent")
+                if verbose: print(f"{dref_key} => {df.loc[key]}")
+                self[dref_key] = df.loc[key]
+        else:
+            raise ValueError("Please supply a pandas.DataFrame or pandas.Series")
+
+
 class DatarefDict(PgfKeyDict):
     """Can be used as: **input parameter** and **output parameter**
 
