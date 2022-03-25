@@ -111,7 +111,7 @@ class Experiment(Type, InputParameter):
     def static_experiment(self, value):
         pass
 
-    def __init__(self, default_experiment_instance = None, title=None):
+    def __init__(self, default_experiment_instance = None, title=None,inputs=None,outputs=None):
         """The constructor of an experiment just fills in the
         necessary attributes but has *no* sideeffects on the outside
         world.
@@ -127,6 +127,10 @@ class Experiment(Type, InputParameter):
         InputParameter.__init__(self)
         self.title = title or self.__class__.__name__
         self.static_experiment = self
+        if inputs is not None:
+            self.__class__.inputs = inputs
+        if outputs is not None:
+            self.__class__.outputs = outputs
         if default_experiment_instance and not os.path.exists(default_experiment_instance):
             default_experiment_instance = None
         self.__reinit__(default_experiment_instance)
@@ -240,6 +244,11 @@ class Experiment(Type, InputParameter):
         >>> experiment.execute(["--input_parameter", "foo"])
         >>> experiment.execute(input_parameter="foo")
         """
+        self.execute_setup(args, **kwargs)
+        self.execute_run()
+        return self.execute_teardown()
+
+    def execute_setup(self, args=[], **kwargs):
         self.dynamic_experiment = self
         self.startup_directory = os.path.abspath(os.curdir)
 
@@ -261,9 +270,9 @@ class Experiment(Type, InputParameter):
         # Set up the experiment
         self.before_experiment_run("output")
 
+    def execute_run(self):
         # Goto the output directory
         os.chdir(self.base_directory)
-
         try:
             self.run()
         except RuntimeError as e:
@@ -278,9 +287,9 @@ class Experiment(Type, InputParameter):
         finally:
             os.chdir(self.startup_directory)
 
-        # Tear down the experiment
-        self.after_experiment_run("output")
 
+    def execute_teardown(self):
+        self.after_experiment_run("output")
         return self.__experiment_instance
 
     @property
