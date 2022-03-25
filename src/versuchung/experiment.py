@@ -17,7 +17,6 @@ from __future__ import print_function
 from optparse import OptionParser
 import datetime
 import logging
-import pprint
 from versuchung.types import InputParameter, OutputParameter, Type
 from versuchung.files import Directory
 from versuchung.tools import JavascriptStyleDictAccess, setup_logging
@@ -25,6 +24,7 @@ import sys
 import os.path
 import glob
 import hashlib
+import json
 import shutil
 import copy
 import tempfile
@@ -142,9 +142,16 @@ class Experiment(Type, InputParameter):
             self.base_directory = os.path.realpath(self.base_directory)
             assert os.path.exists(self.base_directory)
 
-            with open(os.path.join(experiment_path, "metadata")) as fd:
-                metadata = eval(fd.read())
-                self.__metadata = metadata
+            try:
+                with open(os.path.join(experiment_path, "metadata"), "r") as fd:
+                    metadata = json.load(fd)
+            except json.JSONDecodeError:
+                if os.getenv("VERSUCHUNG_METADATA_EVAL"):
+                    with open(os.path.join(experiment_path, "metadata"), "r") as fd:
+                        metadata = eval(fd.read())
+                else:
+                    raise RuntimeError("metadata is invalid JSON. Set VERSUCHUNG_METADATA_EVAL=1 to load metadata exported via pprint") from None
+            self.__metadata = metadata
         else:
             self.base_directory = None
             self.__metadata = None
@@ -370,9 +377,8 @@ class Experiment(Type, InputParameter):
         metadata["experiment-version"] = self.version
         metadata["experiment-hash"]    = m.hexdigest()
 
-        fd = open(os.path.join(self.base_directory, "metadata"), "w+")
-        fd.write(pprint.pformat(metadata) + "\n")
-        fd.close()
+        with open(os.path.join(self.base_directory, "metadata"), "w") as fd:
+            json.dump(metadata, fd)
 
         self.__metadata = metadata
 
@@ -394,9 +400,8 @@ class Experiment(Type, InputParameter):
                 inp.after_experiment_run("input")
 
             self.__metadata["date-end"] = str(datetime.datetime.now())
-            fd = open(os.path.join(self.path, "metadata"), "w+")
-            fd.write(pprint.pformat(self.__metadata) + "\n")
-            fd.close()
+            with open(os.path.join(self.base_directory, "metadata"), "w") as fd:
+                json.dump(self.__metadata, fd)
 
             shutil.rmtree(self.tmp_directory.path)
 
@@ -456,7 +461,7 @@ class Experiment(Type, InputParameter):
         if not self.__metadata:
             md_path = os.path.join(self.base_directory, "metadata")
             with open(md_path) as fd:
-                self.__metadata = eval(fd.read())
+                self.__metadata = json.load(fd)
         return self.__metadata
 
     @property
