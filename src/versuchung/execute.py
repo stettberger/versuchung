@@ -77,7 +77,7 @@ def __shell(failok, command, *args, **kwargs):
     logging.debug("executing: " + command)
     p = Popen(command, **options)
     stdout = ""
-    while True:
+    while True and p.stdout is not None:
         x = p.stdout.readline()
         if not x:
             break
