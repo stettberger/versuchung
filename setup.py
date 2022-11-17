@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from setuptools import setup, Command
+from setuptools import *
 
 import sys
 
@@ -47,11 +47,12 @@ version_info = {
         'Programming Language :: Python :: 3.5'
     ],
     'include_package_data': True,
+    'install_requires': [
+        'papermill'
+    ]
 }
 
-
 setup(packages = ["versuchung"],
-      package_dir = {'versuchung': 'src/versuchung'},
       cmdclass = cmdclass,
       **version_info
   )
