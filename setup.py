@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from setuptools import setup, Command
+from setuptools import *
 
 import sys
 
@@ -30,7 +30,7 @@ with open("README.md", "r") as fh:
 
 version_info = {
     'name': 'versuchung',
-    'version': '1.4',
+    'version': '1.4.1',
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
@@ -47,11 +47,12 @@ version_info = {
         'Programming Language :: Python :: 3.5'
     ],
     'include_package_data': True,
+    'install_requires': [
+        'papermill'
+    ]
 }
 
-
 setup(packages = ["versuchung"],
-      package_dir = {'versuchung': 'src/versuchung'},
       cmdclass = cmdclass,
       **version_info
   )
