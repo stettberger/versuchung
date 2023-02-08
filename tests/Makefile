@@ -10,7 +10,7 @@ $(1): py-$(1)
 
 py-$(1):
 	@echo -n "Running test: $(1)..."
-	@cd $(1); PYTHONPATH=$(PWD)/../src ${PYTHON} test.py
+	@cd $(1); PYTHONPATH=$(PWD)/.. ${PYTHON} test.py
 
 endef
 
