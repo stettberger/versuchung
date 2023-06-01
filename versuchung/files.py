@@ -216,7 +216,7 @@ class Executable(File):
         args, which is of type list, as arguments."""
         from versuchung.execute import shell
 
-        shell(self.path + " " + cmdline, *args)
+        return shell(self.path + " " + cmdline, *args)
 
 class Directory_op_with:
     def __init__(self):
