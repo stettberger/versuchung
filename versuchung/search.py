@@ -19,7 +19,7 @@ import logging
 
 from versuchung.types import List
 
-def search_experiment_results(experiment_type, directory, selector = None):
+def search_experiment_results(experiment_type, directory, selector = None, follow_links=True):
     """In large experiment setups it is hard to keep track of all
     result sets, which were produced. Therefore a search on the
     "result set database" is implemented with this function.
@@ -45,7 +45,7 @@ def search_experiment_results(experiment_type, directory, selector = None):
     if type(selector) == dict:
         selector = search_selector_metadata(selector)
 
-    for root, dirs, files in os.walk(directory, followlinks=True):
+    for root, dirs, files in os.walk(directory, followlinks=follow_links):
         if "metadata" in files:
             experiment_name = os.path.basename(root)
             path = root
