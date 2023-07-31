@@ -392,7 +392,6 @@ class List(InputParameter, Type, list):
         Type.before_experiment_run(self,parameter_type)
 
     def inp_extract_cmdline_parser(self, opts, args):
-        import shlex
         args = self.inp_parser_extract(opts, None)
         if not args:
             return
@@ -414,20 +413,12 @@ class List(InputParameter, Type, list):
             subtype_parser = OptionParser()
             subtype.inp_setup_cmdline_parser(subtype_parser)
 
-            if not ":" in arg:
-                (opts, sub_args) = subtype_parser.parse_args(["--" + subtype.name, arg])
-            else:
-                arg = arg.replace(": ", "--" + subtype.name + " ")
-                arg = arg.replace(":", "--" + subtype.name + "-")
+            sub_args = ["--" + subtype.name, arg]
 
-                arg = shlex.split(arg)
-                (opts, sub_args) = subtype_parser.parse_args(arg)
-
-            subtype.inp_extract_cmdline_parser(opts,sub_args)
+            (opts, sub_args) = subtype_parser.parse_args(sub_args)
+            subtype.inp_extract_cmdline_parser(opts, sub_args)
 
             self.append(subtype)
-
-
 
     def inp_metadata(self):
         metadata = {self.name: []}

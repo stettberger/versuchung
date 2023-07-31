@@ -7,19 +7,24 @@ class SimpleExperiment(Experiment):
     inputs = {"strings": List(String(), default_value=[]),
               "default": List(String, default_value=[String("foo")]),
               "default2": List(String, default_value=[String("fox")]),
-              "default3": List(String, default_value=[String("a"), String("b")])
+              "default3": List(String, default_value=[String("a"), String("b")]),
+              "json": List(String),
     }
 
 
     def run(self):
         strings = [s.value for s in self.i.strings]
-        assert  strings == ["x86", "sparc"]
+        assert strings == ["x86", "sparc"]
 
         default = [s.value for s in self.i.default]
-        assert  default == ["foo"]
+        assert default == ["foo"]
 
         default2 = [s.value for s in self.i.default2]
-        assert  default2 == ["bar"]
+        assert default2 == ["bar"]
+
+        json = [s.value for s in self.i.json]
+        assert json == ['{"a": "b"}']
+
 
         assert self.metadata["strings-0"] == "x86"
         assert self.metadata["strings-1"] == "sparc"
@@ -27,7 +32,7 @@ class SimpleExperiment(Experiment):
 if __name__ == "__main__":
     import shutil
     experiment = SimpleExperiment()
-    strings = ["--strings", "x86", "--strings", "sparc", "--default2", "bar"]
+    strings = ["--strings", "x86", "--strings", "sparc", "--default2", "bar", "--json", '{"a": "b"}']
     dirname = experiment(strings)
 
     if dirname:
