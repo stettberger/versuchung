@@ -3,7 +3,7 @@ Quick Introduction
 
 As a quick start a simple experiment with input and output parameters is show::
 
-    #!/usr/bin/python
+    #!/usr/bin/env python
 
     from versuchung.experiment import Experiment
     from versuchung.types import String
@@ -28,7 +28,7 @@ As a quick start a simple experiment with input and output parameters is show::
         experiment = SimpleExperiment()
         dirname = experiment(sys.argv)
 
-        print dirname
+        print(dirname)
 
 
 This experiment is put in a single python script file. It is a
