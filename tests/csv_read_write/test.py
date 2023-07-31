@@ -11,9 +11,9 @@ class CSVExperiment(Experiment):
         self.outputs.csv.value.append([1,2,3])
 
 if __name__ == "__main__":
-    import shutil, sys
+    import shutil
     experiment = CSVExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment([])
 
     csv = CSV_File(dirname + "/" + "csv_output")
 

@@ -24,10 +24,10 @@ if __name__ == "__main__":
     import sys
 
     exp1 = Exp1()
-    dirname1 = exp1(sys.argv)
+    dirname1 = exp1()
 
     exp2 = Exp2()
-    dirname2 = exp2(sys.argv)
+    dirname2 = exp2()
 
     import shutil
     shutil.rmtree(dirname1)

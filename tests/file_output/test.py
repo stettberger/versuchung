@@ -22,9 +22,9 @@ class SimpleExperiment(Experiment):
         x = self.output_directory.new_directory("foo").new_file("lala")
 
 if __name__ == "__main__":
-    import shutil, sys
+    import shutil
     experiment = SimpleExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment()
 
     assert os.path.exists("%s/output_directory/foo/lala" % dirname)
 

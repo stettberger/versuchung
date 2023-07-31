@@ -17,10 +17,10 @@ class SimpleExperiment(Experiment):
         assert int(self.o.events.value[2][3] * 10) in [4,5,6]
 
 if __name__ == "__main__":
-    import shutil, sys
+    import shutil
 
     experiment = SimpleExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment()
 
     if dirname:
         shutil.rmtree(dirname)

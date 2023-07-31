@@ -3,7 +3,6 @@ from __future__ import print_function
 from versuchung.experiment import Experiment
 from versuchung.execute import shell, shell_failok, CommandFailed
 
-import sys
 import os
 
 experiment_file = os.path.abspath(__file__)
@@ -31,7 +30,7 @@ class ShellExperiment(Experiment):
 if __name__ == "__main__":
     import shutil
     experiment = ShellExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment()
     print("success")
     if dirname:
         shutil.rmtree(dirname)

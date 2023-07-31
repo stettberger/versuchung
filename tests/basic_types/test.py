@@ -23,7 +23,7 @@ if __name__ == "__main__":
     import sys
     import shutil
     t = BasicTypesTest()
-    dirname = t(["--bool", "no"] + sys.argv)
+    dirname = t(["--bool", "no"])
 
     assert BasicTypesTest(dirname).bool.value == t.bool.value
 

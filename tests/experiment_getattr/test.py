@@ -30,7 +30,7 @@ class SimpleExperiment(Experiment):
 if __name__ == "__main__":
     import shutil, sys
     experiment = SimpleExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment(sys.argv[1:])
 
     assert experiment.metadata["experiment-version"] == experiment.version
 

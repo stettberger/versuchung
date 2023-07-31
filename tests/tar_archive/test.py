@@ -21,5 +21,5 @@ if __name__ == "__main__":
     import sys
     import shutil
     t = TarArchiveText()
-    dirname = t(sys.argv)
+    dirname = t()
     shutil.rmtree(dirname)

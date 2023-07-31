@@ -20,7 +20,7 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from io import StringIO
-from optparse import OptionParser
+from argparse import ArgumentParser
 import copy
 import glob
 
@@ -162,7 +162,7 @@ class InputParameter:
             kw["help"]    = "(default: %s)" % default
 
         kw.update(kwargs)
-        parser.add_option('', '--%s' % option, **kw)
+        parser.add_argument(f'--{option}', **kw)
 
     def inp_parser_extract(self, opts, option):
         a = getattr(opts, self.__parser_option(option), None)
@@ -410,12 +410,12 @@ class List(InputParameter, Type, list):
             # Create Subtype and initialize its parser
             subtype = self.datatype()
             self.subobjects["%d" % len(self)] = subtype
-            subtype_parser = OptionParser()
+            subtype_parser = ArgumentParser()
             subtype.inp_setup_cmdline_parser(subtype_parser)
 
             sub_args = ["--" + subtype.name, arg]
 
-            (opts, sub_args) = subtype_parser.parse_args(sub_args)
+            opts = subtype_parser.parse_args(sub_args)
             subtype.inp_extract_cmdline_parser(opts, sub_args)
 
             self.append(subtype)

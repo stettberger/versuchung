@@ -40,9 +40,9 @@ class SimpleExperiment(Experiment):
 
 
 if __name__ == "__main__":
-    import shutil, sys,os
+    import shutil, os
     experiment = SimpleExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment([])
 
     assert os.path.isdir(experiment.o.dir2.path + "/tmpdir")
     assert os.path.exists(experiment.o.dir2.path + "/barfoo")

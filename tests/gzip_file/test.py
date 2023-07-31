@@ -19,7 +19,7 @@ if __name__ == "__main__":
     import shutil, sys
 
     experiment = SimpleExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment(sys.argv[1:])
 
     assert len(open(experiment.gz_out.original_path, 'rb').read()) > 0
 

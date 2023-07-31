@@ -7,9 +7,9 @@ class SimpleExperiment(Experiment):
         time.sleep(0.1)
 
 if __name__ == "__main__":
-    import shutil, sys,os
+    import shutil, sys, os
     experiment = SimpleExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment(sys.argv[1:])
 
     assert experiment.metadata["date-start"] != experiment.metadata["date-end"]
 

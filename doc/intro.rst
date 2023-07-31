@@ -26,7 +26,7 @@ As a quick start a simple experiment with input and output parameters is show::
     if __name__ == "__main__":
         import sys
         experiment = SimpleExperiment()
-        dirname = experiment(sys.argv)
+        dirname = experiment(sys.argv[1:])
 
         print(dirname)
 

@@ -53,10 +53,9 @@ class GitArchiveTest(Experiment):
 
 
 if __name__ == "__main__":
-    import sys
     import shutil
     t = GitArchiveTest()
-    dirname = t(sys.argv)
+    dirname = t()
 
     # Reinit of Git Archive must fail
     reinit = GitArchiveTest(dirname)

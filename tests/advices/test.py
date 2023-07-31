@@ -18,9 +18,9 @@ class SimpleExperiment(Experiment):
         shell("echo Can you hear me?")
 
 if __name__ == "__main__":
-    import shutil, sys
+    import shutil
     experiment = SimpleExperiment()
-    dirname = experiment(sys.argv)
+    dirname = experiment()
 
     assert os.path.exists(dirname + "/shell_0_time")
     assert os.path.exists(dirname + "/shell_0_stdout")

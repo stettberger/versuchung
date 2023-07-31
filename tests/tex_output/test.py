@@ -77,7 +77,7 @@ if __name__ == "__main__":
     import sys
     import shutil
     t = TexTest()
-    dirname = t(sys.argv)
+    dirname = t(sys.argv[1:])
     with open(dirname + "/macro.tex") as fd:
         content = fd.read()
         assert r'\newcommand{\foo} {bar}' in content

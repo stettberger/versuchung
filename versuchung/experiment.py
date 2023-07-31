@@ -14,7 +14,7 @@
 
 from __future__ import print_function
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 import datetime
 import logging
 from versuchung.types import InputParameter, OutputParameter, Type
@@ -203,19 +203,24 @@ class Experiment(Type, InputParameter):
 
 
     def __setup_parser(self):
-        self.__parser = OptionParser("%prog <options>")
-        self.__parser.add_option('-d', '--base-dir', dest='base_dir', action='store',
-                                 help="Directory which is used for storing the experiment data",
-                                 default = ".")
-        self.__parser.add_option('--dummy', dest='dummy_result', action='store_true',
-                                 help="Use dummy result directory",
-                                 default=False)
-        self.__parser.add_option('-s', '--symlink', dest='do_symlink', action='store_true',
-                                 help="symlink the result dir (as newest)")
-        self.__parser.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
-                                 help="increase verbosity (specify multiple times for more)")
-        self.__parser.add_option('--title', dest='title',
-                                 help="custom title of the experiment (default: Experiment class-name)")
+        self.__parser = ArgumentParser("%prog <options>")
+        self.__parser.add_argument('-d', '--base-dir',
+                                   dest='base_dir', action='store',
+                                   help="Directory which is used for storing the experiment data",
+                                   default=".")
+        self.__parser.add_argument('--dummy',
+                                   dest='dummy_result', action='store_true',
+                                   help="Use dummy result directory",
+                                   default=False)
+        self.__parser.add_argument('-s', '--symlink',
+                                   dest='do_symlink', action='store_true',
+                                   help="symlink the result dir (as newest)")
+        self.__parser.add_argument('-v', '--verbose',
+                                   dest='verbose', action='count', default=0,
+                                   help="increase verbosity (specify multiple times for more)")
+        self.__parser.add_argument('--title',
+                                   dest='title',
+                                   help="custom title of the experiment (default: Experiment class-name)")
 
         for (name, inp) in self.inputs.items():
             if type(inp) == LambdaType:
@@ -256,7 +261,7 @@ class Experiment(Type, InputParameter):
 
         # Set up the argument parsing
         self.__setup_parser()
-        (opts, args) = self.__parser.parse_args(args)
+        opts = self.__parser.parse_args(args)
         setup_logging(opts.verbose)
 
         self.__opts = opts
