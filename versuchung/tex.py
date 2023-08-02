@@ -1,22 +1,24 @@
 # This file is part of versuchung.
-# 
+#
 # versuchung is free software: you can redistribute it and/or modify it under the
 # terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # versuchung is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # versuchung.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import print_function
 
-from versuchung.files import File
 import re
 import os
+
+from versuchung.files import File
+
 
 class Macros(File):
     """Can be used as: **input parameter** and **output parameter**
@@ -35,7 +37,7 @@ class Macros(File):
     >>> macro = Macros("/tmp/test.tex")
     >>> macro.macro("MyNewTexMacro", 23)
     >>> print macro.value
-    \\newcommand{\MyNewTexMacro} {23}
+    \\newcommand{\\MyNewTexMacro} {23}
 
     """
     def __init__(self, filename = "data.tex"):
@@ -75,7 +77,7 @@ class PgfKeyDict(File, dict):
     >>> pgf = PgfKeyDict("/tmp/test.tex")
     >>> pgf["abcd"] = 23
     >>> pgf.flush()  # flush method of File
-    >>> print open("/tmp/test.tex").read()
+    >>> print(open("/tmp/test.tex").read())
     \\pgfkeyssetvalue{/versuchung/abcd}{23}
 
     In the TeX source you can do something like::
