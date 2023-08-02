@@ -14,6 +14,7 @@
 
 from __future__ import print_function
 
+import json
 import re
 import os
 
@@ -237,6 +238,139 @@ class DatarefDict(PgfKeyDict):
 
     def __init__(self, filename = "data.tex", key = ""):
         PgfKeyDict.__init__(self, filename, key, "drefset")
+
+
+class _InnerLuaTable(dict):
+    """Used for nested LuaTables.
+
+    Please refer to the :class:`~versuchung.tex.LuaTable` for documentation."""
+    def __init__(self):
+        dict.__init__(self)
+
+    def __setitem__(self, key, value, /):
+        if not isinstance(value, (str, int, float, bool, _InnerLuaTable)):
+            raise ValueError("Value must be one of str, int, float or bool.")
+        if not isinstance(key, (str, int)):
+            raise ValueError("Key must be a str or int.")
+        if isinstance(key, str) and " " in key:
+            raise ValueError("Key is not allowed to contain spaces.")
+        dict.__setitem__(self, key, value)
+
+    def __getitem__(self, key):
+        if key not in self:
+            # assume a key chain
+            self[key] = _InnerLuaTable()
+        return dict.__getitem__(self, key)
+
+    def _to_lua(self, indent=0):
+        out = ["{"]
+        idt = indent * ' '
+        for idx, (key, value) in enumerate(self.items()):
+            suffix = ',' if idx < len(self) - 1 else ''
+            if isinstance(key, int):
+                # ints a keys needs extra syntax in Lua
+                key = f"[{key}]"
+            header = f"{idt}{key} = "
+
+            if isinstance(value, _InnerLuaTable):
+                val = value._to_lua(indent=indent)
+                val[-1] += suffix
+                out.append(header + val[0])
+                out.extend([idt + x for x in val[1:]])
+            else:
+                out.append(f"{header}{json.dumps(value)}{suffix}")
+        return out + ["}"]
+
+
+class LuaTable(File, _InnerLuaTable):
+    """Can be used as: **input parameter** and **output parameter**
+
+    When using Lua(La)TeX or lmtx (from ConTeXt), TeX is able to interact with Lua.
+    This class exports the data as a lua table, so it can be accessed from TeX via Lua.
+
+    >>> from versuchung.tex import LuaTable
+    >>> lua = LuaTable("/tmp/table.lua")
+    >>> lua["some"]["key"] = 5
+    >>> lua.flush()  # flush method of File
+    >>> print(open("/tmp/table.lua").read())
+    userdata = userdata or {}
+    userdata.experiment = {
+      some = {
+        key = 5
+      }
+    }
+
+    In ConTeXt, you can access the table with something like:
+        \\startluacode
+        require("table.lua")
+        \\stopluacode
+
+        \\starttext
+        \\ctxlua{context(userdata.experiment.some.key)}
+        \\stoptext
+
+    In LuaLaTeX source you can do something like::
+        \\documentclass{article}
+
+        \\usepackage{luacode}
+        \\luadirect{require("table.lua")}
+
+        \\begin{document}
+            \\luadirect{tex.print(userdata.experiment.some.key)}
+        \\end{document}
+
+    .. note::
+
+       If you want to calculate with the data even more and want to do that in
+       your TeX project, a Lua table might be the best choice since you can
+       use everything from Lua to use the data.
+    """
+    def __init__(self, filename="data.lua", experiment_name="experiment"):
+        File.__init__(self, filename)
+        _InnerLuaTable.__init__(self)
+        self.experiment_name = experiment_name
+
+        # Ensure the file is written
+        if os.path.exists(self.path):
+            _ = self.value
+
+    def after_read(self, value):
+        # make a JSON object of the Lua table
+        # first drop the header
+        val = value[value.find("= {") + 2:]
+        # then replace the int keys (JSON has no concept of int keys,
+        # therefore mark them specially)
+        INT_ID = "int-key:"
+        p = re.compile(r'\[(?P<key>\d+)\] =')
+        val = p.sub('"' + INT_ID + r'\g<key>":', val)
+        # finally the string keys
+        p = re.compile(r'(?P<key>\w+) =')
+        val = p.sub(r'"\g<key>":', val)
+
+        def to_lua_table(obj):
+            new_obj = _InnerLuaTable()
+            for key, value in obj.items():
+                if key.startswith(INT_ID):
+                    key = int(key[len(INT_ID):])
+                new_obj[key] = value
+            return new_obj
+
+        parsed = json.loads(val, object_hook=to_lua_table)
+        for key, value in parsed.items():
+            self[key] = value
+
+    def before_write(self, value):
+        header = ("userdata = userdata or {}\n"
+                  f"userdata.{self.experiment_name} = ")
+        return header + "\n".join(self._to_lua(indent=2))
+
+    def flush(self):
+        self.value = self.before_write(self)
+        File.flush(self)
+
+    def __repr__(self):
+        return f"LuaTable({' '.join(self._to_lua())})"
+
 
 if __name__ == '__main__':
     import sys

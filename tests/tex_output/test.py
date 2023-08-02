@@ -5,11 +5,13 @@ from versuchung.tex import *
 
 import pandas as pd
 
+
 class TexTest(Experiment):
     outputs = {"tex": Macros("macro.tex"),
                "pgf": PgfKeyDict("pgf.tex"),
                "dref": DatarefDict("dref.tex"),
-               "pd": DatarefDict("pandas.tex") }
+               "pd": DatarefDict("pandas.tex"),
+               "lua": LuaTable("table.lua")}
 
     def run(self):
         tex = self.o.tex
@@ -73,6 +75,20 @@ class TexTest(Experiment):
         assert self.pd.get('stat/50 percent') == 4.5
         self.pd.clear()
 
+        lua = self.o.lua
+        lua["bla"] = 5
+        try:
+            class MyOwn:
+                pass
+            lua["not allowed"] = "something"
+            lua[3.2323] = "something"
+            lua["something"] = MyOwn()
+        except ValueError:
+            pass
+        lua["a"]["key"]["chain"] = "something"
+        lua[5] = "number key"
+
+
 if __name__ == "__main__":
     import sys
     import shutil
@@ -92,6 +108,13 @@ if __name__ == "__main__":
     a = dref.value
     assert len(dref) == 1
     assert dref["foobar"] == "42"
+
+    lua = LuaTable(dirname + "/table.lua")
+    a = lua.value
+    assert len(lua) == 3
+    assert lua["bla"] == 5
+    assert lua["a"]["key"]["chain"] == "something"
+    assert lua[5] == "number key"
 
     shutil.rmtree(dirname)
     print("success")
