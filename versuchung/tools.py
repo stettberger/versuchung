@@ -126,6 +126,7 @@ class Advice:
                                    if x != self.around ]
         am.after[self.method] = [ x for x in am.after[self.method]
                                   if x != self.after ]
+        self.enabled = False
 
     def enable(self):
         am = self.am
