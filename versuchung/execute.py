@@ -235,10 +235,10 @@ class MachineMonitor(CSV_File):
         return [self.psutil.cpu_percent()]
 
     def __get_memory(self):
-        phymem = self.psutil.phymem_usage()
-        virtmem = self.psutil.virtmem_usage()
-        cached = self.psutil.cached_phymem()
-        buffers = self.psutil.phymem_buffers()
+        phymem = self.psutil.virtual_memory()
+        virtmem = self.psutil.swap_memory()
+        cached = self.psutil.virtual_memory().cached
+        buffers = self.psutil.virtual_memory().buffers
 
         return [phymem.total, phymem.used, phymem.free,
                 virtmem.total, virtmem.used, virtmem.free,
@@ -246,8 +246,8 @@ class MachineMonitor(CSV_File):
 
     def __get_net(self):
         if not hasattr(self, "old_network_stat"):
-            self.old_network_stat = self.psutil.network_io_counters()
-        stat = self.psutil.network_io_counters()
+            self.old_network_stat = self.psutil.net_io_counters()
+        stat = self.psutil.net_io_counters()
         ret = [stat.bytes_sent - self.old_network_stat.bytes_sent,
                stat.bytes_recv - self.old_network_stat.bytes_recv]
         self.old_network_stat = stat
