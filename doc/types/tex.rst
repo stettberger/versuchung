@@ -7,5 +7,14 @@ from your TeX sources to your experiment results. This is especially
 useful if you want to reproduce your paper with a different version of
 your programs.
 
-.. automodule:: versuchung.tex
-   :members:
+.. autoclass:: versuchung.tex.Macros
+   :members: 
+
+.. autoclass:: versuchung.tex.PgfKeyDict
+   :members: 
+
+.. autoclass:: versuchung.tex.DatarefDict
+   :members: 
+
+.. autoclass:: versuchung.tex.LuaTable
+   :members: 

@@ -17,6 +17,7 @@ from __future__ import print_function
 import json
 import re
 import os
+import luadata
 
 from versuchung.files import File
 
@@ -234,7 +235,14 @@ class PgfKeyDict(File, dict):
 class DatarefDict(PgfKeyDict):
     """Can be used as: **input parameter** and **output parameter**
 
-    DatarefDict is like :class:`~versuchung.tex.PgfKeyDict`, but generates keys for dataref."""
+    DatarefDict is like :class:`~versuchung.tex.PgfKeyDict`, but generates keys for dataref <https://ctan.org/pkg/dataref>.
+
+    In LaTeX, you can reference dataref keys or calculate with them::
+
+        \\dref{/base}
+        \\drefrel[percent of=/base]{/derived}
+
+    """
 
     def __init__(self, filename = "data.tex", key = ""):
         PgfKeyDict.__init__(self, filename, key, "drefset")
@@ -263,23 +271,7 @@ class _InnerLuaTable(dict):
         return dict.__getitem__(self, key)
 
     def _to_lua(self, indent=0):
-        out = ["{"]
-        idt = indent * ' '
-        for idx, (key, value) in enumerate(self.items()):
-            suffix = ',' if idx < len(self) - 1 else ''
-            if isinstance(key, int):
-                # ints a keys needs extra syntax in Lua
-                key = f"[{key}]"
-            header = f"{idt}{key} = "
-
-            if isinstance(value, _InnerLuaTable):
-                val = value._to_lua(indent=indent)
-                val[-1] += suffix
-                out.append(header + val[0])
-                out.extend([idt + x for x in val[1:]])
-            else:
-                out.append(f"{header}{json.dumps(value)}{suffix}")
-        return out + ["}"]
+        return luadata.serialize(self, indent=' ' * indent).split('\n')
 
 
 class LuaTable(File, _InnerLuaTable):
@@ -300,7 +292,8 @@ class LuaTable(File, _InnerLuaTable):
       }
     }
 
-    In ConTeXt, you can access the table with something like:
+    In ConTeXt, you can access the table with something like::
+
         \\startluacode
         require("table.lua")
         \\stopluacode
@@ -310,6 +303,7 @@ class LuaTable(File, _InnerLuaTable):
         \\stoptext
 
     In LuaLaTeX source you can do something like::
+
         \\documentclass{article}
 
         \\usepackage{luacode}
@@ -334,30 +328,26 @@ class LuaTable(File, _InnerLuaTable):
         if os.path.exists(self.path):
             _ = self.value
 
+    @staticmethod
+    def _to_versuchung_objects(data):
+        if isinstance(data, dict):
+            tab = _InnerLuaTable()
+            for key, value in data.items():
+                tab[key] = LuaTable._to_versuchung_objects(value)
+            return tab
+        if isinstance(data, list):
+            tab = _InnerLuaTable()
+            for idx, item in enumerate(data):
+                tab[idx + 1] = LuaTable._to_versuchung_objects(item)
+            return tab
+        return data
+
     def after_read(self, value):
-        # make a JSON object of the Lua table
         # first drop the header
         val = value[value.find("= {") + 2:]
-        # then replace the int keys (JSON has no concept of int keys,
-        # therefore mark them specially)
-        INT_ID = "int-key:"
-        p = re.compile(r'\[(?P<key>\d+)\] =')
-        val = p.sub('"' + INT_ID + r'\g<key>":', val)
-        # finally the string keys
-        p = re.compile(r'(?P<key>\w+) =')
-        val = p.sub(r'"\g<key>":', val)
-
-        def to_lua_table(obj):
-            new_obj = _InnerLuaTable()
-            for key, value in obj.items():
-                if key.startswith(INT_ID):
-                    key = int(key[len(INT_ID):])
-                new_obj[key] = value
-            return new_obj
-
-        parsed = json.loads(val, object_hook=to_lua_table)
+        parsed = luadata.unserialize(val)
         for key, value in parsed.items():
-            self[key] = value
+            self[key] = self._to_versuchung_objects(value)
 
     def before_write(self, value):
         header = ("userdata = userdata or {}\n"

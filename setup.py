@@ -30,7 +30,7 @@ with open("README.md", "r") as fh:
 
 version_info = {
     'name': 'versuchung',
-    'version': '1.4',
+    'version': '1.4.2',
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
@@ -48,7 +48,8 @@ version_info = {
     ],
     'include_package_data': True,
     'install_requires': [
-        'papermill'
+        'papermill',
+        'luadata',
     ]
 }
 
