@@ -22,7 +22,7 @@ try:
 except ImportError:
     import _thread as thread
 import time
-import pipes
+import shlex
 from versuchung.tools import AdviceManager, Advice
 from multiprocessing import cpu_count as __cpu_count
 
@@ -55,10 +55,10 @@ def quote_args(args):
     if len(args) == 1 and type(args[0]) == dict:
         ret = {}
         for k,v in args[0].items():
-            ret[k] = pipes.quote(v)
+            ret[k] = shlex.quote(v)
         return ret
     elif type(args) == list or type(args) == tuple:
-        args = tuple([pipes.quote(x) for x in args])
+        args = tuple([shlex.quote(x) for x in args])
     else:
         assert False
     return args
