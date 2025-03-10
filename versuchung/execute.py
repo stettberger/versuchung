@@ -115,7 +115,7 @@ def shell(command, *args, **kwargs):
     .. note::
 
       The following command enables capturing `stderr`, `stdout` and
-      runtime information (with `/usr/bin/time`)::
+      runtime information (with `/usr/bin/env time`)::
 
         shell.track(experiment.path)
 
@@ -174,7 +174,7 @@ class AdviceShellTracker(Advice):
         args = versuchung.execute.quote_args(list(args)[1:])
         command = command % args
 
-        cmd = "/usr/bin/time --verbose -o %s_time sh -c %s 2> %s_stderr"
+        cmd = "/usr/bin/env time --verbose -o %s_time sh -c %s 2> %s_stderr"
         base = os.path.join(self.base_directory, "shell_%d" % self.count)
         self.count += 1
         args = tuple([cmd, base, command, base])
