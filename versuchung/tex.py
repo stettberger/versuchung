@@ -17,7 +17,6 @@ from __future__ import print_function
 import json
 import re
 import os
-import luadata
 
 from versuchung.files import File
 
@@ -271,6 +270,7 @@ class _InnerLuaTable(dict):
         return dict.__getitem__(self, key)
 
     def _to_lua(self, indent=0):
+        import luadata
         return luadata.serialize(self, indent=' ' * indent).split('\n')
 
 
@@ -345,6 +345,7 @@ class LuaTable(File, _InnerLuaTable):
     def after_read(self, value):
         # first drop the header
         val = value[value.find("= {") + 2:]
+        import luadata
         parsed = luadata.unserialize(val)
         for key, value in parsed.items():
             self[key] = self._to_versuchung_objects(value)

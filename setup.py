@@ -30,7 +30,7 @@ with open("README.md", "r") as fh:
 
 version_info = {
     'name': 'versuchung',
-    'version': '1.4.2',
+    'version': '1.4.3',
     'description': 'A toolbox for experiments',
     'author': 'Christian Dietrich',
     'author_email': 'stettberger@dokucode.de',
@@ -47,10 +47,12 @@ version_info = {
         'Programming Language :: Python :: 3.5'
     ],
     'include_package_data': True,
-    'install_requires': [
-        'papermill',
-        'luadata',
-    ]
+    # Only needed by LuaTable (luadata) and for running notebooks
+    # (papermill, nbconvert).
+    'extras_require': {
+        'lua': ['luadata'],
+        'jupyter': ['papermill', 'nbconvert'],
+    }
 }
 
 setup(packages = ["versuchung"],
